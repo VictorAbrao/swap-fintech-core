@@ -113,7 +113,7 @@ app.use('/api/public', publicOperationsRoutes);
 app.use('/api/public/arbitrage', publicArbitrageRoutes);
 app.use('/api/public', publicWebhookRoutes);
 app.use('/api/public', publicUploadRoutes);
-app.use('/api/public/validate-account', publicValidateAccountRoutes);
+app.use('/api/public', publicValidateAccountRoutes);
 app.use('/api/public/fx-rates', publicFxRatesRoutes);
 app.use('/api/admin/markup', adminMarkupRoutes);
 app.use('/api/admin/fx-rates', adminFxRatesRoutes);
