@@ -125,7 +125,7 @@ router.get('/', authenticateToken, requireClientOrAbove, async (req, res) => {
  *                 description: Nome do beneficiário
  *               transfer_method:
  *                 type: string
- *                 enum: [SEPA, SWIFT, ACH]
+ *                 enum: [SEPA, SWIFT, ACH, CRYPTO, INTERNAL]
  *                 description: Método de transferência
  *               beneficiary_iban:
  *                 type: string
@@ -157,6 +157,15 @@ router.get('/', authenticateToken, requireClientOrAbove, async (req, res) => {
  *               beneficiary_account_type:
  *                 type: string
  *                 description: Account Type (para ACH)
+ *               crypto_protocol:
+ *                 type: string
+ *                 description: Protocolo crypto (para CRYPTO)
+ *               crypto_wallet:
+ *                 type: string
+ *                 description: Endereço da carteira crypto (para CRYPTO)
+ *               internal_account_number:
+ *                 type: string
+ *                 description: Número da conta interna (para INTERNAL)
  *     responses:
  *       201:
  *         description: Beneficiário criado com sucesso
@@ -180,7 +189,10 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       intermediary_bank_swift,
       beneficiary_routing_number,
       beneficiary_account_number_ach,
-      beneficiary_account_type
+      beneficiary_account_type,
+      crypto_protocol,
+      crypto_wallet,
+      internal_account_number
     } = req.body;
     
     // Validação básica
@@ -192,7 +204,7 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       });
     }
     
-    if (!['SEPA', 'SWIFT', 'ACH'].includes(transfer_method)) {
+    if (!['SEPA', 'SWIFT', 'ACH', 'CRYPTO', 'INTERNAL'].includes(transfer_method)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid transfer method',
@@ -231,7 +243,10 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       intermediary_bank_swift: intermediary_bank_swift || null,
       beneficiary_routing_number: beneficiary_routing_number || null,
       beneficiary_account_number_ach: beneficiary_account_number_ach || null,
-      beneficiary_account_type: beneficiary_account_type || null
+      beneficiary_account_type: beneficiary_account_type || null,
+      crypto_protocol: crypto_protocol || null,
+      crypto_wallet: crypto_wallet || null,
+      internal_account_number: internal_account_number || null
     };
     
     // Inserir beneficiário
@@ -461,7 +476,7 @@ router.get('/', authenticateToken, requireClientOrAbove, async (req, res) => {
  *                 description: Nome do beneficiário
  *               transfer_method:
  *                 type: string
- *                 enum: [SEPA, SWIFT, ACH]
+ *                 enum: [SEPA, SWIFT, ACH, CRYPTO, INTERNAL]
  *                 description: Método de transferência
  *               beneficiary_iban:
  *                 type: string
@@ -493,6 +508,15 @@ router.get('/', authenticateToken, requireClientOrAbove, async (req, res) => {
  *               beneficiary_account_type:
  *                 type: string
  *                 description: Account Type (para ACH)
+ *               crypto_protocol:
+ *                 type: string
+ *                 description: Protocolo crypto (para CRYPTO)
+ *               crypto_wallet:
+ *                 type: string
+ *                 description: Endereço da carteira crypto (para CRYPTO)
+ *               internal_account_number:
+ *                 type: string
+ *                 description: Número da conta interna (para INTERNAL)
  *     responses:
  *       201:
  *         description: Beneficiário criado com sucesso
@@ -516,7 +540,10 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       intermediary_bank_swift,
       beneficiary_routing_number,
       beneficiary_account_number_ach,
-      beneficiary_account_type
+      beneficiary_account_type,
+      crypto_protocol,
+      crypto_wallet,
+      internal_account_number
     } = req.body;
     
     // Validação básica
@@ -528,7 +555,7 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       });
     }
     
-    if (!['SEPA', 'SWIFT', 'ACH'].includes(transfer_method)) {
+    if (!['SEPA', 'SWIFT', 'ACH', 'CRYPTO', 'INTERNAL'].includes(transfer_method)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid transfer method',
@@ -567,7 +594,10 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       intermediary_bank_swift: intermediary_bank_swift || null,
       beneficiary_routing_number: beneficiary_routing_number || null,
       beneficiary_account_number_ach: beneficiary_account_number_ach || null,
-      beneficiary_account_type: beneficiary_account_type || null
+      beneficiary_account_type: beneficiary_account_type || null,
+      crypto_protocol: crypto_protocol || null,
+      crypto_wallet: crypto_wallet || null,
+      internal_account_number: internal_account_number || null
     };
     
     // Inserir beneficiário
