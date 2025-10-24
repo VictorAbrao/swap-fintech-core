@@ -7,7 +7,7 @@ const walletsService = require('../services/walletsService');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 /**
@@ -38,8 +38,8 @@ const supabase = createClient(
  *                 description: Valor da transferência
  *               currency:
  *                 type: string
- *                 enum: [USD, EUR, GBP, USDT]
- *                 description: Moeda da transferência (USD, EUR, GBP, USDT)
+ *                 enum: [USD, EUR, GBP, USDT, USDC, BRL]
+ *                 description: Moeda da transferência (USD, EUR, GBP, USDT, USDC, BRL)
  *               payment_reference:
  *                 type: string
  *                 description: Referência do pagamento
@@ -91,12 +91,12 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
     }
     
     // Validar moeda permitida
-    const allowedCurrencies = ['USD', 'EUR', 'GBP', 'USDT'];
+    const allowedCurrencies = ['USD', 'EUR', 'GBP', 'USDT', 'USDC', 'BRL'];
     if (!allowedCurrencies.includes(currency)) {
       return res.status(400).json({
         success: false,
         error: 'Invalid currency',
-        message: 'Moeda não permitida. Use: USD, EUR, GBP ou USDT'
+        message: 'Moeda não permitida. Use: USD, EUR, GBP, USDT, USDC ou BRL'
       });
     }
     
@@ -153,6 +153,39 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       });
     }
     
+    // Verificar se é transferência interna
+    const isInternalTransfer = beneficiary.transfer_method === 'INTERNAL';
+    let destinationClientId = null;
+    
+    if (isInternalTransfer) {
+      // Para transferências internas, buscar o cliente de destino pelo número da conta
+      const { data: destinationClient, error: destError } = await supabase
+        .from('clients')
+        .select('id, name')
+        .eq('account_number', beneficiary.internal_account_number)
+        .eq('active', true)
+        .single();
+      
+      if (destError || !destinationClient) {
+        return res.status(400).json({
+          success: false,
+          error: 'Destination client not found',
+          message: 'Cliente de destino não encontrado ou inativo'
+        });
+      }
+      
+      destinationClientId = destinationClient.id;
+      
+      // Verificar se não está tentando transferir para si mesmo
+      if (destinationClientId === clientId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid destination',
+          message: 'Não é possível transferir para sua própria conta'
+        });
+      }
+    }
+
     // Preparar dados da operação
     const operationData = {
       user_id: userId,
@@ -167,11 +200,11 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       final_rate: 1.0,
       markup_percentage: 0.0,
       fee_amount: 0.0,
-      status: 'pending', // Transferências começam como pending
+      status: isInternalTransfer ? 'executed' : 'pending', // Transferências internas são executadas imediatamente
       quotation_id: null,
       reference_id: null,
       beneficiary_name: beneficiary.beneficiary_name,
-      beneficiary_account: beneficiary.beneficiary_account_number || beneficiary.beneficiary_account_number_ach,
+      beneficiary_account: beneficiary.internal_account_number || beneficiary.beneficiary_account_number || beneficiary.beneficiary_account_number_ach,
       beneficiary_bank_name: beneficiary.beneficiary_bank_name,
       beneficiary_bank_address: beneficiary.beneficiary_bank_address,
       beneficiary_iban: beneficiary.beneficiary_iban,
@@ -181,10 +214,10 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       transfer_method: beneficiary.transfer_method,
       intermediary_bank_swift: beneficiary.intermediary_bank_swift,
       payment_reference: payment_reference,
-      notes: notes || null,
+      notes: notes || (isInternalTransfer ? `Transferência interna para conta ${beneficiary.internal_account_number}` : null),
       attachment_url_1: attachment_url_1 || null,
       attachment_url_2: attachment_url_2 || null,
-      executed_at: null
+      executed_at: isInternalTransfer ? new Date().toISOString() : null
     };
     
     // Criar operação no histórico
@@ -199,18 +232,56 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       });
     }
     
-    // Atualizar saldo da carteira (subtrair valor)
-    const walletResult = await walletsService.updateWalletBalance(
+    // Atualizar saldos das carteiras
+    const walletResults = {
+      source: null,
+      destination: null
+    };
+    
+    // Sempre debitar da carteira de origem
+    walletResults.source = await walletsService.updateWalletBalance(
       clientId,
       currency,
       amount,
       'subtract'
     );
     
-    if (!walletResult.success) {
-      console.error('Error updating wallet:', walletResult.error);
-      // Note: A operação já foi criada, mas o saldo não foi atualizado
-      // Em um sistema real, você poderia implementar transações ou rollback
+    if (!walletResults.source.success) {
+      console.error('Error updating source wallet:', walletResults.source.error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to update source wallet',
+        message: 'Erro ao atualizar carteira de origem'
+      });
+    }
+    
+    // Para transferências internas, creditar na carteira de destino
+    if (isInternalTransfer && destinationClientId) {
+      walletResults.destination = await walletsService.updateWalletBalance(
+        destinationClientId,
+        currency,
+        amount,
+        'add'
+      );
+      
+      if (!walletResults.destination.success) {
+        console.error('Error updating destination wallet:', walletResults.destination.error);
+        // Reverter a operação de origem se falhar a de destino
+        await walletsService.updateWalletBalance(
+          clientId,
+          currency,
+          amount,
+          'add'
+        );
+        
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to update destination wallet',
+          message: 'Erro ao atualizar carteira de destino'
+        });
+      }
+      
+      console.log(`✅ Transferência interna executada: ${amount} ${currency} de ${clientId} para ${destinationClientId}`);
     }
     
     res.status(201).json({
@@ -220,10 +291,15 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
         beneficiary: beneficiary.beneficiary_name,
         amount: amount,
         currency: currency,
-        status: 'pending',
-        wallet_updated: walletResult.success
+        status: isInternalTransfer ? 'executed' : 'pending',
+        transfer_type: isInternalTransfer ? 'internal' : 'external',
+        destination_client: isInternalTransfer ? destinationClientId : null,
+        wallet_updated: {
+          source: walletResults.source.success,
+          destination: walletResults.destination?.success || null
+        }
       },
-      message: 'Transferência criada com sucesso'
+      message: isInternalTransfer ? 'Transferência interna executada com sucesso' : 'Transferência criada com sucesso'
     });
     
   } catch (error) {
