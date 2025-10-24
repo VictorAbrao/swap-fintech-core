@@ -281,6 +281,54 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
         });
       }
       
+      // Criar operação adicional no histórico do cliente de destino
+      try {
+        const destinationOperationData = {
+          user_id: userId, // Mantém o usuário que fez a transferência
+          client_id: destinationClientId, // Cliente de destino
+          operation_type: 'internal_deposit', // Novo tipo para depósitos internos
+          source_currency: currency,
+          target_currency: currency,
+          source_amount: amount, // Valor positivo para mostrar como depósito
+          target_amount: amount,
+          exchange_rate: 1.0,
+          base_rate: 1.0,
+          final_rate: 1.0,
+          markup_percentage: 0.0,
+          fee_amount: 0.0,
+          status: 'executed',
+          quotation_id: null,
+          reference_id: operationResult.data.id, // Referência à operação original
+          beneficiary_name: beneficiary.beneficiary_name,
+          beneficiary_account: beneficiary.internal_account_number,
+          beneficiary_bank_name: null,
+          beneficiary_bank_address: null,
+          beneficiary_iban: null,
+          beneficiary_swift_bic: null,
+          beneficiary_routing_number: null,
+          beneficiary_account_type: null,
+          transfer_method: 'INTERNAL',
+          intermediary_bank_swift: null,
+          payment_reference: payment_reference,
+          notes: `Depósito interno recebido de conta ${clientId}`,
+          attachment_url_1: null,
+          attachment_url_2: null,
+          executed_at: new Date().toISOString()
+        };
+        
+        const destinationOperationResult = await operationsService.createOperation(destinationOperationData);
+        
+        if (destinationOperationResult.success) {
+          console.log(`✅ Operação de depósito criada para cliente destino: ${destinationOperationResult.data.id}`);
+        } else {
+          console.error('⚠️ Erro ao criar operação de depósito para cliente destino:', destinationOperationResult.error);
+          // Não falha a transferência por isso, apenas loga o erro
+        }
+      } catch (depositError) {
+        console.error('⚠️ Erro ao criar operação de depósito:', depositError.message);
+        // Não falha a transferência por isso, apenas loga o erro
+      }
+      
       console.log(`✅ Transferência interna executada: ${amount} ${currency} de ${clientId} para ${destinationClientId}`);
     }
     
