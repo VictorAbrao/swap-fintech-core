@@ -204,6 +204,18 @@ router.get('/summary', authenticateToken, requireClientOrAbove, async (req, res)
           displayData.fee_amount = op.fee_amount;
           displayData.notes = op.notes;
         }
+        // Para Depósitos Internos
+        else if (op.operation_type === 'internal_deposit') {
+          displayData.amount = op.source_amount; // Valor positivo para mostrar como depósito
+          displayData.currency = op.source_currency;
+          displayData.target_amount = op.target_amount;
+          displayData.target_currency = op.target_currency;
+          displayData.exchange_rate = op.exchange_rate;
+          displayData.fee_amount = op.fee_amount;
+          displayData.notes = op.notes;
+          displayData.transfer_method = op.transfer_method;
+          displayData.beneficiary_account = op.beneficiary_account;
+        }
 
         return displayData;
       });
