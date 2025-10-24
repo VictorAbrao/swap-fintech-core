@@ -69,3 +69,18 @@ cd swapone-fintech-front && npm run dev
 - Use toast notifications for user feedback
 - Implement proper error handling
 - Use soft delete instead of hard delete
+
+## 🔄 Git Workflow
+- **ALWAYS** run `./auto-commit.sh` after completing any development task
+- **ALWAYS** commit changes to GitHub at the end of each request
+- **Repository:** https://github.com/VictorAbrao/swap-fintech-core
+- **Branch:** main
+- **Auto-commit script:** `./auto-commit.sh` (executable)
+
+## 🚨 MANDATORY RULE
+**EVERY DEVELOPMENT SESSION MUST END WITH:**
+1. Run `./auto-commit.sh` to commit and push changes
+2. Verify the push was successful
+3. Confirm the changes are visible on GitHub
+
+**This rule is NON-NEGOTIABLE and must be followed for every request completion.**
