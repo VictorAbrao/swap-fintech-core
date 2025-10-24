@@ -1,0 +1,12 @@
+-- Script para executar a migração no Supabase
+-- Execute este SQL no Supabase SQL Editor
+
+-- Adicionar campo braza_order_id na tabela operations_history
+ALTER TABLE operations_history 
+ADD COLUMN braza_order_id VARCHAR(255);
+
+-- Adicionar índice para melhor performance nas consultas
+CREATE INDEX idx_operations_history_braza_order_id ON operations_history(braza_order_id);
+
+-- Adicionar comentário para documentar o campo
+COMMENT ON COLUMN operations_history.braza_order_id IS 'UUID da ordem no Braza Bank para execução posterior';

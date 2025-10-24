@@ -1,0 +1,71 @@
+# SwapOne Fintech Project - Cursor Rules
+
+## 🚀 Server Configuration
+- **Frontend (Vite):** MUST run on port 5001
+- **Backend (Node.js):** MUST run on port 5002
+- **Never change these ports** - they are configured for production deployment
+
+## 📁 Project Structure
+```
+swapone-fintech-one/
+├── swapone-fintech-api/     # Backend (Node.js/Express)
+├── swapone-fintech-front/   # Frontend (React/Vite)
+└── database_migrations/     # SQL migrations
+```
+
+## 🔧 Development Commands
+```bash
+# Backend (port 5002)
+cd swapone-fintech-api && npm start
+
+# Frontend (port 5001) 
+cd swapone-fintech-front && npm run dev
+```
+
+## 🌐 URLs
+- **Frontend:** http://localhost:5001/ or https://app.swapone.global/
+- **Backend API:** http://localhost:5002/ or https://api.swapcambio.com/
+- **Admin Panel:** https://app.swapone.global/admin-panel
+
+## 📋 Key Features
+- **Admin Mesa:** Dropdown menu with FX Trade, Arbitrage, Transfer submenus
+- **Soft Delete:** Implemented for all entities (clients, users, transactions, etc.)
+- **Email Notifications:** Sent to push@swapone.global (BOARD_EMAIL env var)
+- **Fixed Rate Amount:** Stored in database and applied to operations
+
+## 🗄️ Database
+- **Supabase:** Primary database
+- **Tables:** clients, profiles, operations_history, beneficiaries, wallets, client_markups
+- **Soft Delete:** All tables have `deleted_at` and `is_deleted` columns
+
+## 🔐 Authentication
+- **JWT Tokens:** Used for API authentication
+- **Roles:** admin, client, user
+- **Protected Routes:** All admin routes require admin role
+
+## 📧 Email Configuration
+- **SMTP:** Outlook (smtp-mail.outlook.com:587)
+- **From:** comunicacao@swapone.global
+- **Board Notifications:** push@swapone.global
+- **Environment Variables:** EMAIL_USER, EMAIL_PASS, BOARD_EMAIL
+
+## 🎯 Important Notes
+- Always check if servers are running on correct ports before making changes
+- Frontend hot reload may fail if port 5001 is not available
+- Backend API must be running for frontend to work properly
+- Use `ps aux | grep -E "(node|npm)"` to check running processes
+- Use `netstat -tlnp | grep :500` to check port usage
+
+## 🚨 Common Issues
+- **Port conflicts:** Kill existing processes before starting new ones
+- **WebSocket errors:** Usually caused by wrong port configuration
+- **Import errors:** Check file paths and ensure files exist
+- **API errors:** Verify backend is running on port 5002
+
+## 📝 Code Standards
+- Use TypeScript for frontend
+- Use JavaScript for backend
+- Follow existing patterns for API calls
+- Use toast notifications for user feedback
+- Implement proper error handling
+- Use soft delete instead of hard delete
