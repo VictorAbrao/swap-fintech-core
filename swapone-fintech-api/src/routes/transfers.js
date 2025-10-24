@@ -200,7 +200,7 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       final_rate: 1.0,
       markup_percentage: 0.0,
       fee_amount: 0.0,
-      status: isInternalTransfer ? 'executed' : 'pending', // Transferências internas são executadas imediatamente
+      status: 'pending', // Todas as transferências ficam pendentes até aprovação manual
       quotation_id: null,
       reference_id: null,
       beneficiary_name: beneficiary.beneficiary_name,
@@ -255,6 +255,9 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       });
     }
     
+    // Todas as transferências ficam pendentes até aprovação manual
+    // Comentado: execução automática de carteiras de destino
+    /*
     // Para transferências internas, creditar na carteira de destino
     if (isInternalTransfer && destinationClientId) {
       walletResults.destination = await walletsService.updateWalletBalance(
@@ -331,6 +334,7 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       
       console.log(`✅ Transferência interna executada: ${amount} ${currency} de ${clientId} para ${destinationClientId}`);
     }
+    */
     
     res.status(201).json({
       success: true,
@@ -339,15 +343,15 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
         beneficiary: beneficiary.beneficiary_name,
         amount: amount,
         currency: currency,
-        status: isInternalTransfer ? 'executed' : 'pending',
+        status: 'pending', // Todas as transferências ficam pendentes
         transfer_type: isInternalTransfer ? 'internal' : 'external',
         destination_client: isInternalTransfer ? destinationClientId : null,
         wallet_updated: {
           source: walletResults.source.success,
-          destination: walletResults.destination?.success || null
+          destination: null // Não há execução automática de destino
         }
       },
-      message: isInternalTransfer ? 'Transferência interna executada com sucesso' : 'Transferência criada com sucesso'
+      message: 'Transferência criada com sucesso - Aguardando aprovação'
     });
     
   } catch (error) {
