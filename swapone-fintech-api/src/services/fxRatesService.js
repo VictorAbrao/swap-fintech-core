@@ -185,18 +185,11 @@ class FxRatesService {
       });
 
       // 2. Obter taxa base do sistema (fx_rates) + markup do cliente
-      // Para operações de compra, usar o markup inverso (BRL→USDT para comprar USDT)
+      // SEMPRE usar o markup direto (USDT→BRL) independente da operação
       let markupFromCurrency = fromCurrency;
       let markupToCurrency = toCurrency;
       
-      if (operation === 'buy') {
-        // Para compra: usar markup inverso
-        markupFromCurrency = toCurrency;
-        markupToCurrency = fromCurrency;
-        console.log(`🔄 Buy operation: using inverse markup ${markupFromCurrency}→${markupToCurrency}`);
-      } else {
-        console.log(`🔄 Sell operation: using direct markup ${markupFromCurrency}→${markupToCurrency}`);
-      }
+      console.log(`🔄 Using direct markup ${markupFromCurrency}→${markupToCurrency} for ${operation} operation`);
       
       // 2.1. Obter taxa base do sistema (fx_rates)
       const fxRateResult = await this.getRate(markupFromCurrency, markupToCurrency);
