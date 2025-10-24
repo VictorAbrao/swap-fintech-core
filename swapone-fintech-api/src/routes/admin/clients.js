@@ -7,6 +7,7 @@ const fs = require('fs');
 const walletsService = require('../../services/walletsService');
 const emailService = require('../../services/emailService');
 const softDeleteService = require('../../services/softDeleteService');
+const { generateUniqueAccountNumber } = require('../../utils/accountNumberGenerator');
 
 const router = express.Router();
 
@@ -160,13 +161,18 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
       });
     }
 
+    // Generate unique account number
+    const accountNumber = await generateUniqueAccountNumber();
+    console.log(`🏦 Generated account number ${accountNumber} for client ${name}`);
+
     const { data: client, error } = await supabase
       .from('clients')
       .insert([{
         name,
         cnpj,
         annual_transaction_limit_usdt: annual_transaction_limit_usdt || 1000000,
-        active: true
+        active: true,
+        account_number: accountNumber
       }])
       .select()
       .single();
