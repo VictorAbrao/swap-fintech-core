@@ -1273,7 +1273,7 @@ router.post('/:clientId/transfers', authenticateToken, requireAdmin, async (req,
     // Buscar dados do cliente
     const { data: client, error: clientError } = await supabase
       .from('clients')
-      .select('name, company_name')
+      .select('name')
       .eq('id', clientId)
       .single();
     
@@ -1285,7 +1285,7 @@ router.post('/:clientId/transfers', authenticateToken, requireAdmin, async (req,
       });
     }
     
-    const clientName = client.company_name || client.name;
+    const clientName = client.name;
     
     // Buscar dados do beneficiário
     const { data: beneficiary, error: beneficiaryError } = await supabase
@@ -1330,7 +1330,7 @@ router.post('/:clientId/transfers', authenticateToken, requireAdmin, async (req,
       // Para transferências internas, buscar o cliente de destino pelo número da conta
       const { data: destinationClientData, error: destError } = await supabase
         .from('clients')
-        .select('id, name, company_name')
+        .select('id, name')
         .eq('account_number', beneficiary.internal_account_number)
         .single();
       
@@ -1356,6 +1356,7 @@ router.post('/:clientId/transfers', authenticateToken, requireAdmin, async (req,
     
     // Criar dados da operação
     const operationData = {
+      user_id: req.user.userId, // Admin que está criando a transferência
       client_id: clientId,
       operation_type: 'transfer',
       source_amount: amount,
@@ -1387,7 +1388,7 @@ router.post('/:clientId/transfers', authenticateToken, requireAdmin, async (req,
     // Adicionar campos específicos para transferências internas
     if (isInternalTransfer && destinationClient) {
       operationData.destination_client_id = destinationClient.id;
-      operationData.destination_client_name = destinationClient.company_name || destinationClient.name;
+      operationData.destination_client_name = destinationClient.name;
     }
     
     // Criar a operação no histórico
