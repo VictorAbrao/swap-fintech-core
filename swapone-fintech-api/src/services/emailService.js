@@ -618,6 +618,75 @@ class EmailService {
       };
     }
   }
+
+  /**
+   * Enviar notificação para o board sobre operações de beneficiários
+   */
+  async sendBeneficiaryNotification(action, beneficiaryData, userInfo) {
+    try {
+      const actionTexts = {
+        'created': 'Novo Beneficiário Criado',
+        'updated': 'Beneficiário Atualizado',
+        'deleted': 'Beneficiário Deletado'
+      };
+
+      // Lista de destinatários (board + admin)
+      const recipients = [
+        process.env.BOARD_EMAIL || 'push@swapone.global',
+        'vi-abrao@hotmail.com'
+      ].filter(Boolean).join(', ');
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER || 'comunicacao@swapone.global',
+        to: recipients,
+        subject: `[SwapOne] ${actionTexts[action]} - ${beneficiaryData.beneficiary_name || 'Beneficiário'}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">👥 ${actionTexts[action]}</h2>
+            
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #374151; margin-top: 0;">Detalhes do Beneficiário</h3>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><strong>ID:</strong></td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${beneficiaryData.id}</td></tr>
+                <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><strong>Nome:</strong></td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${beneficiaryData.beneficiary_name || 'N/A'}</td></tr>
+                <tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><strong>Método:</strong></td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${beneficiaryData.transfer_method || 'N/A'}</td></tr>
+                ${beneficiaryData.beneficiary_iban ? `<tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><strong>IBAN:</strong></td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${beneficiaryData.beneficiary_iban}</td></tr>` : ''}
+                ${beneficiaryData.beneficiary_account_number ? `<tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><strong>Conta:</strong></td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${beneficiaryData.beneficiary_account_number}</td></tr>` : ''}
+                ${beneficiaryData.beneficiary_bank_name ? `<tr><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;"><strong>Banco:</strong></td><td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${beneficiaryData.beneficiary_bank_name}</td></tr>` : ''}
+                <tr><td style="padding: 8px;"><strong>Data:</strong></td><td style="padding: 8px;">${new Date(beneficiaryData.created_at || beneficiaryData.updated_at).toLocaleString('pt-BR')}</td></tr>
+              </table>
+            </div>
+
+            <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: #374151; margin-top: 0;">Usuário Responsável</h3>
+              <p><strong>Nome:</strong> ${userInfo.name || 'N/A'}</p>
+              <p><strong>Email:</strong> ${userInfo.email || 'N/A'}</p>
+              <p><strong>Role:</strong> ${userInfo.role || 'N/A'}</p>
+            </div>
+
+            <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 0; color: #92400e;"><strong>⚠️ Ação:</strong> ${actionTexts[action]}</p>
+              <p style="margin: 5px 0 0 0; color: #92400e;"><strong>⏰ Timestamp:</strong> ${new Date().toLocaleString('pt-BR')}</p>
+            </div>
+          </div>
+        `
+      };
+
+      const result = await this.transporter.sendMail(mailOptions);
+      console.log(`📧 Notificação de beneficiário ${action} enviada para: ${recipients}`);
+      return {
+        success: true,
+        messageId: result.messageId
+      };
+
+    } catch (error) {
+      console.error(`❌ Erro ao enviar notificação de beneficiário ${action}:`, error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
 }
 
 module.exports = new EmailService();
