@@ -266,8 +266,14 @@ router.patch('/:id/cancel', authenticateToken, requireAdmin, async (req, res) =>
       source_currency: transaction.source_currency,
       target_currency: transaction.target_currency,
       current_status: transaction.status,
-      destination_client_id: transaction.destination_client_id
+      destination_client_id: transaction.destination_client_id,
+      transfer_method: transaction.transfer_method
     });
+    
+    console.log('🔍 Verificando campos da transação:');
+    console.log('  - destination_client_id:', transaction.destination_client_id);
+    console.log('  - transfer_method:', transaction.transfer_method);
+    console.log('  - typeof destination_client_id:', typeof transaction.destination_client_id);
     
     const reversions = {
       wallets: [],
