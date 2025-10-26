@@ -7,11 +7,24 @@ class BrazaBankService {
     this.username = process.env.BRAZA_USERNAME;
     this.password = process.env.BRAZA_PASSWORD;
     this.productId = process.env.BRAZA_PRODUCT_ID;
+    this.productIdUsdc = process.env.BRAZA_PRODUCT_ID_USDC || '194';
     this.customerId = process.env.BRAZA_CUSTOMER_ID;
     this.walletId = process.env.BRAZA_WALLET_ID;
     this.accessToken = null;
     this.refreshToken = null;
     this.tokenExpiry = null;
+  }
+  
+  /**
+   * Get product ID based on currency
+   * @param {string} currency - Currency code (USDT, USDC, etc.)
+   * @returns {number} Product ID for the currency
+   */
+  getProductId(currency) {
+    if (currency === 'USDC') {
+      return parseInt(this.productIdUsdc);
+    }
+    return parseInt(this.productId);
   }
 
   /**
@@ -197,12 +210,14 @@ class BrazaBankService {
 
       const currencyPair = `${currency}:BRL`;
 
+      const productId = this.getProductId(currency);
+      
       const payload = {
         currency_amount: currency,
         amount: parseFloat(amount),
         currency: currencyPair,
         side: side,
-        product_id: parseInt(this.productId)
+        product_id: productId
       };
 
       console.log(`📊 Getting quotation from Braza Bank:`);
@@ -210,6 +225,7 @@ class BrazaBankService {
       console.log(`   Amount: ${amount}`);
       console.log(`   Side: ${side}`);
       console.log(`   Pair: ${currencyPair}`);
+      console.log(`   Product ID: ${productId}`);
       console.log(`   Payload:`, JSON.stringify(payload, null, 2));
 
       // Usar o novo método com logging
