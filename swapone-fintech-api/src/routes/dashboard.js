@@ -13,6 +13,26 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
+// Helper function to get client name by ID
+async function getClientNameById(clientId) {
+  try {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('name')
+      .eq('id', clientId)
+      .single();
+    
+    if (error || !data) {
+      return 'Cliente Desconhecido';
+    }
+    
+    return data.name;
+  } catch (error) {
+    console.error('Error fetching client name:', error);
+    return 'Cliente Desconhecido';
+  }
+}
+
 /**
  * @swagger
  * /api/dashboard/summary:
@@ -121,7 +141,7 @@ router.get('/summary', authenticateToken, requireClientOrAbove, async (req, res)
     
     let recentTransfers = [];
     if (operationsResult.success && operationsResult.data && operationsResult.data.length > 0) {
-      recentTransfers = operationsResult.data.map(op => {
+      recentTransfers = await Promise.all(operationsResult.data.map(async op => {
         // Mapear campos baseado no tipo de operação
         let displayData = {
           id: op.id,
@@ -176,11 +196,14 @@ router.get('/summary', authenticateToken, requireClientOrAbove, async (req, res)
         }
         // Para Transferências
         else if (op.operation_type === 'transfer') {
-          // Verificar se é uma transferência recebida (cliente atual é o receptor)
-          const isReceivedTransfer = op.client_id === clientId && op.destination_client_id !== null;
+          // Verificar se é uma transferência recebida (cliente atual é o destino)
+          const isReceivedTransfer = op.destination_client_id === clientId;
           
           if (isReceivedTransfer) {
             // Transferência recebida - mostrar como transferência recebida
+            // Para transferências recebidas, precisamos buscar o nome do cliente que enviou
+            const senderClientName = await getClientNameById(op.client_id);
+            
             displayData.amount = op.source_amount;
             displayData.currency = op.source_currency;
             displayData.target_amount = op.target_amount;
@@ -188,10 +211,10 @@ router.get('/summary', authenticateToken, requireClientOrAbove, async (req, res)
             displayData.transfer_method = op.transfer_method;
             displayData.payment_reference = op.payment_reference;
             displayData.fee_amount = op.fee_amount;
-            displayData.notes = `Transfer by ${op.destination_client_name || 'cliente'}`;
+            displayData.notes = `Transfer by ${senderClientName || 'cliente'}`;
             displayData.beneficiary_account = op.internal_account_number;
             displayData.operation_type = 'transfer_received'; // Tipo específico para transferências recebidas
-            displayData.transfer_by = op.destination_client_name || 'Cliente';
+            displayData.transfer_by = senderClientName || 'Cliente';
             displayData.transfer_from_account = op.internal_account_number;
           } else {
             // Transferência enviada - mostrar como débito
@@ -228,7 +251,7 @@ router.get('/summary', authenticateToken, requireClientOrAbove, async (req, res)
         }
 
         return displayData;
-      });
+      }));
     } else {
       const transferHistory = mockDataService.getTransferHistory(userId);
       recentTransfers = transferHistory.slice(0, 5);
