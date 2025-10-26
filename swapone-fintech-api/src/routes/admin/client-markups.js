@@ -31,7 +31,7 @@ router.get('/:clientId/markups', authenticateToken, requireAdmin, async (req, re
     if (!markups || markups.length === 0) {
       console.log(`🔄 [MARKUPS] No markups found, creating new ones for client: ${clientId}`);
       // Create markups manually instead of using RPC
-      const currencies = ['USD', 'EUR', 'GBP', 'USDT'];
+      const currencies = ['USD', 'EUR', 'GBP', 'USDT', 'USDC'];
       const markupsToCreate = [];
       
       for (const fromCurrency of currencies) {
@@ -65,6 +65,7 @@ router.get('/:clientId/markups', authenticateToken, requireAdmin, async (req, re
       
       const grouped = {
         USDT: createdMarkups.filter(m => m.from_currency === 'USDT'),
+        USDC: createdMarkups.filter(m => m.from_currency === 'USDC'),
         USD: createdMarkups.filter(m => m.from_currency === 'USD'),
         EUR: createdMarkups.filter(m => m.from_currency === 'EUR'),
         GBP: createdMarkups.filter(m => m.from_currency === 'GBP')
@@ -83,12 +84,13 @@ router.get('/:clientId/markups', authenticateToken, requireAdmin, async (req, re
     console.log(`📊 [MARKUPS] Processing ${markups.length} existing markups...`);
     const grouped = {
       USDT: markups.filter(m => m.from_currency === 'USDT'),
+      USDC: markups.filter(m => m.from_currency === 'USDC'),
       USD: markups.filter(m => m.from_currency === 'USD'),
       EUR: markups.filter(m => m.from_currency === 'EUR'),
       GBP: markups.filter(m => m.from_currency === 'GBP')
     };
 
-    console.log(`📊 [MARKUPS] Grouped: USDT(${grouped.USDT.length}), USD(${grouped.USD.length}), EUR(${grouped.EUR.length}), GBP(${grouped.GBP.length})`);
+    console.log(`📊 [MARKUPS] Grouped: USDT(${grouped.USDT.length}), USDC(${grouped.USDC.length}), USD(${grouped.USD.length}), EUR(${grouped.EUR.length}), GBP(${grouped.GBP.length})`);
 
     console.log(`✅ [MARKUPS] Sending response with ${markups.length} markups`);
     res.json({
