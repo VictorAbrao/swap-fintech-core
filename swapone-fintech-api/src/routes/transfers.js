@@ -255,9 +255,7 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       });
     }
     
-    // Todas as transferências ficam pendentes até aprovação manual
-    // Comentado: execução automática de carteiras de destino
-    /*
+    // Para transferências internas, executar automaticamente
     // Para transferências internas, creditar na carteira de destino
     if (isInternalTransfer && destinationClientId) {
       walletResults.destination = await walletsService.updateWalletBalance(
@@ -334,7 +332,6 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       
       console.log(`✅ Transferência interna executada: ${amount} ${currency} de ${clientId} para ${destinationClientId}`);
     }
-    */
     
     res.status(201).json({
       success: true,
