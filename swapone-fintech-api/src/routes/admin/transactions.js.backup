@@ -448,42 +448,6 @@ router.patch('/:id/cancel', authenticateToken, requireAdmin, async (req, res) =>
         operation: 'subtract'
       });
       
-    } else if (transaction.operation_type === 'internal_deposit') {
-      console.log('🔄 Revertendo Depósito Interno - 1 carteira');
-      
-      // Para internal_deposit, reverter subtraindo o valor (cliente não deveria ter recebido)
-      const { data: depositWallet, error: depositFetchError } = await supabase
-        .from('wallets')
-        .select('*')
-        .eq('client_id', transaction.client_id)
-        .eq('currency', transaction.source_currency)
-        .single();
-      
-      if (depositFetchError && depositFetchError.code !== 'PGRST116') {
-        console.error('❌ Erro ao buscar carteira depósito interno:', depositFetchError);
-        throw depositFetchError;
-      }
-      
-      if (depositWallet) {
-        const newDepositBalance = depositWallet.balance - parseFloat(transaction.source_amount);
-        const { error: depositError } = await supabase
-          .from('wallets')
-          .update({ balance: newDepositBalance, updated_at: new Date().toISOString() })
-          .eq('client_id', transaction.client_id)
-          .eq('currency', transaction.source_currency);
-        
-        if (depositError) {
-          console.error('❌ Erro ao reverter depósito interno:', depositError);
-          throw depositError;
-        }
-      }
-      
-      reversions.wallets.push({
-        currency: transaction.source_currency,
-        amount: parseFloat(transaction.source_amount),
-        operation: 'subtract'
-      });
-      
     } else if (transaction.operation_type === 'transfer') {
       console.log('🔄 Revertendo Transferência - 1 carteira');
       
