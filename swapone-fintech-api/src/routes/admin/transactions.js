@@ -265,7 +265,8 @@ router.patch('/:id/cancel', authenticateToken, requireAdmin, async (req, res) =>
       target_amount: transaction.target_amount,
       source_currency: transaction.source_currency,
       target_currency: transaction.target_currency,
-      current_status: transaction.status
+      current_status: transaction.status,
+      destination_client_id: transaction.destination_client_id
     });
     
     const reversions = {
