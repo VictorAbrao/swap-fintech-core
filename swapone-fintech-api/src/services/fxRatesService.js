@@ -285,8 +285,8 @@ class FxRatesService {
           final_rate: finalRate,
           converted_amount: convertedAmount,
           operation: operation,
-          braza_order_id: brazaData.id, // UUID do Braza Bank para execução posterior
-          braza_data: brazaData
+          braza_order_id: brazaData.id // UUID do Braza Bank para execução posterior (apenas interno, NÃO enviar braza_data para cliente)
+          // braza_data removido para não expor dados internos do Braza Bank ao cliente
         }
       };
     } catch (error) {
