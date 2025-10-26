@@ -10,6 +10,7 @@ const swaggerJsdoc = require('swagger-jsdoc');
 // Import routes
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
+const clientTransactionsRoutes = require('./routes/client-transactions');
 const accountsRoutes = require('./routes/accounts');
 const arbitrageRoutes = require('./routes/arbitrage');
 const docsRoutes = require('./routes/docs');
@@ -102,6 +103,7 @@ const swaggerAdmin = require('./config/swagger-admin');
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/client/transactions', clientTransactionsRoutes);
 app.use('/api/accounts', accountsRoutes);
 app.use('/api/arbitrage', arbitrageRoutes);
 app.use('/api/operations', operationsRoutes);
