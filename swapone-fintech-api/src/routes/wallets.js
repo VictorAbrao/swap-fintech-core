@@ -17,7 +17,7 @@ const walletsService = require('../services/walletsService');
  *         required: true
  *         schema:
  *           type: string
- *           enum: [USD, EUR, GBP, USDT]
+ *           enum: [USD, EUR, GBP, USDT, USDC]
  *         description: Moeda da carteira
  *     responses:
  *       200:
@@ -47,12 +47,12 @@ router.get('/balance/:currency', authenticateToken, requireClientOrAbove, async 
     const clientId = req.user.clientId;
     
     // Validar moeda permitida
-    const allowedCurrencies = ['USD', 'EUR', 'GBP', 'USDT'];
+    const allowedCurrencies = ['USD', 'EUR', 'GBP', 'USDT', 'USDC'];
     if (!allowedCurrencies.includes(currency.toUpperCase())) {
       return res.status(400).json({
         success: false,
         error: 'Invalid currency',
-        message: 'Moeda não permitida. Use: USD, EUR, GBP ou USDT'
+        message: 'Moeda não permitida. Use: USD, EUR, GBP, USDT ou USDC'
       });
     }
     
