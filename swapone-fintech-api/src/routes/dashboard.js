@@ -176,13 +176,35 @@ router.get('/summary', authenticateToken, requireClientOrAbove, async (req, res)
         }
         // Para Transferências
         else if (op.operation_type === 'transfer') {
-          displayData.amount = op.source_amount;
-          displayData.currency = op.source_currency;
-          displayData.target_amount = op.target_amount;
-          displayData.target_currency = op.target_currency;
-          displayData.transfer_method = op.transfer_method;
-          displayData.payment_reference = op.payment_reference;
-          displayData.fee_amount = op.fee_amount;
+          // Verificar se é uma transferência recebida (cliente atual é o receptor)
+          const isReceivedTransfer = op.client_id === clientId && op.destination_client_id !== null;
+          
+          if (isReceivedTransfer) {
+            // Transferência recebida - mostrar como transferência recebida
+            displayData.amount = op.source_amount;
+            displayData.currency = op.source_currency;
+            displayData.target_amount = op.target_amount;
+            displayData.target_currency = op.target_currency;
+            displayData.transfer_method = op.transfer_method;
+            displayData.payment_reference = op.payment_reference;
+            displayData.fee_amount = op.fee_amount;
+            displayData.notes = `Transfer by ${op.destination_client_name || 'cliente'}`;
+            displayData.beneficiary_account = op.internal_account_number;
+            displayData.operation_type = 'transfer_received'; // Tipo específico para transferências recebidas
+            displayData.transfer_by = op.destination_client_name || 'Cliente';
+            displayData.transfer_from_account = op.internal_account_number;
+          } else {
+            // Transferência enviada - mostrar como débito
+            displayData.amount = op.source_amount;
+            displayData.currency = op.source_currency;
+            displayData.target_amount = op.target_amount;
+            displayData.target_currency = op.target_currency;
+            displayData.transfer_method = op.transfer_method;
+            displayData.payment_reference = op.payment_reference;
+            displayData.fee_amount = op.fee_amount;
+            displayData.notes = op.notes;
+            displayData.beneficiary_account = op.beneficiary_account;
+          }
         }
         // Para Depósitos Externos
         else if (op.operation_type === 'external_deposit' || op.operation_type === 'deposit') {
@@ -203,18 +225,6 @@ router.get('/summary', authenticateToken, requireClientOrAbove, async (req, res)
           displayData.exchange_rate = op.exchange_rate;
           displayData.fee_amount = op.fee_amount;
           displayData.notes = op.notes;
-        }
-        // Para Depósitos Internos
-        else if (op.operation_type === 'internal_deposit') {
-          displayData.amount = op.source_amount; // Valor positivo para mostrar como depósito
-          displayData.currency = op.source_currency;
-          displayData.target_amount = op.target_amount;
-          displayData.target_currency = op.target_currency;
-          displayData.exchange_rate = op.exchange_rate;
-          displayData.fee_amount = op.fee_amount;
-          displayData.notes = op.notes;
-          displayData.transfer_method = op.transfer_method;
-          displayData.beneficiary_account = op.beneficiary_account;
         }
 
         return displayData;

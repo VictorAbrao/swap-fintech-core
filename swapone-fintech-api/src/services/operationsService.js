@@ -112,10 +112,11 @@ class OperationsService {
 
   async getClientOperations(clientId, limit = 50) {
     try {
+      // Buscar operações onde o cliente é o originador OU o destino (para transferências internas)
       const { data, error } = await supabase
         .from('operations_history')
         .select('*')
-        .eq('client_id', clientId)
+        .or(`client_id.eq.${clientId},destination_client_id.eq.${clientId}`)
         .neq('status', 'cancelado')
         .neq('status', 'failed')
         .order('created_at', { ascending: false })

@@ -156,20 +156,21 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
     // Verificar se é transferência interna
     const isInternalTransfer = beneficiary.transfer_method === 'INTERNAL';
     let destinationClientId = null;
+    let destinationClient = null;
     
     console.log('🔍 Beneficiary transfer method:', beneficiary.transfer_method);
     console.log('🔍 Is internal transfer:', isInternalTransfer);
     
     if (isInternalTransfer) {
       // Para transferências internas, buscar o cliente de destino pelo número da conta
-      const { data: destinationClient, error: destError } = await supabase
+      const { data: destClient, error: destError } = await supabase
         .from('clients')
         .select('id, name')
         .eq('account_number', beneficiary.internal_account_number)
         .eq('active', true)
         .single();
       
-      if (destError || !destinationClient) {
+      if (destError || !destClient) {
         return res.status(400).json({
           success: false,
           error: 'Destination client not found',
@@ -177,7 +178,8 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
         });
       }
       
-      destinationClientId = destinationClient.id;
+      destinationClientId = destClient.id;
+      destinationClient = destClient;
       
       // Verificar se não está tentando transferir para si mesmo
       if (destinationClientId === clientId) {
@@ -203,7 +205,7 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       final_rate: 1.0,
       markup_percentage: 0.0,
       fee_amount: 0.0,
-      status: 'pending', // Todas as transferências ficam pendentes até aprovação manual
+      status: isInternalTransfer ? 'executed' : 'pending',
       quotation_id: null,
       reference_id: null,
       beneficiary_name: beneficiary.beneficiary_name,
@@ -220,6 +222,12 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
       notes: notes || (isInternalTransfer ? `Transferência interna para conta ${beneficiary.internal_account_number}` : null),
       attachment_url_1: attachment_url_1 || null,
       attachment_url_2: attachment_url_2 || null,
+      // Campos específicos para transferências internas
+      destination_client_id: isInternalTransfer ? destinationClientId : null,
+      destination_client_name: isInternalTransfer ? destinationClient?.name : null,
+      crypto_protocol: beneficiary.crypto_protocol,
+      crypto_wallet: beneficiary.crypto_wallet,
+      internal_account_number: beneficiary.internal_account_number,
       executed_at: isInternalTransfer ? new Date().toISOString() : null
     };
     
@@ -285,54 +293,6 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
           error: 'Failed to update destination wallet',
           message: 'Erro ao atualizar carteira de destino'
         });
-      }
-      
-      // Criar operação adicional no histórico do cliente de destino
-      try {
-        const destinationOperationData = {
-          user_id: userId, // Mantém o usuário que fez a transferência
-          client_id: destinationClientId, // Cliente de destino
-          operation_type: 'internal_deposit', // Novo tipo para depósitos internos
-          source_currency: currency,
-          target_currency: currency,
-          source_amount: amount, // Valor positivo para mostrar como depósito
-          target_amount: amount,
-          exchange_rate: 1.0,
-          base_rate: 1.0,
-          final_rate: 1.0,
-          markup_percentage: 0.0,
-          fee_amount: 0.0,
-          status: 'executed',
-          quotation_id: null,
-          reference_id: operationResult.data.id, // Referência à operação original
-          beneficiary_name: beneficiary.beneficiary_name,
-          beneficiary_account: beneficiary.internal_account_number,
-          beneficiary_bank_name: null,
-          beneficiary_bank_address: null,
-          beneficiary_iban: null,
-          beneficiary_swift_bic: null,
-          beneficiary_routing_number: null,
-          beneficiary_account_type: null,
-          transfer_method: 'INTERNAL',
-          intermediary_bank_swift: null,
-          payment_reference: payment_reference,
-          notes: `Depósito interno recebido de conta ${clientId}`,
-          attachment_url_1: null,
-          attachment_url_2: null,
-          executed_at: new Date().toISOString()
-        };
-        
-        const destinationOperationResult = await operationsService.createOperation(destinationOperationData);
-        
-        if (destinationOperationResult.success) {
-          console.log(`✅ Operação de depósito criada para cliente destino: ${destinationOperationResult.data.id}`);
-        } else {
-          console.error('⚠️ Erro ao criar operação de depósito para cliente destino:', destinationOperationResult.error);
-          // Não falha a transferência por isso, apenas loga o erro
-        }
-      } catch (depositError) {
-        console.error('⚠️ Erro ao criar operação de depósito:', depositError.message);
-        // Não falha a transferência por isso, apenas loga o erro
       }
       
       console.log(`✅ Transferência interna executada: ${amount} ${currency} de ${clientId} para ${destinationClientId}`);
