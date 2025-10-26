@@ -410,9 +410,15 @@ class EmailService {
         'deleted': 'Transação Deletada'
       };
 
+      // Lista de destinatários (board + admin)
+      const recipients = [
+        process.env.BOARD_EMAIL || 'push@swapone.global',
+        'vi-abrao@hotmail.com'
+      ].filter(Boolean).join(', ');
+
       const mailOptions = {
         from: process.env.EMAIL_USER || 'comunicacao@swapone.global',
-        to: process.env.BOARD_EMAIL || 'push@swapone.global',
+        to: recipients,
         subject: `[SwapOne] ${actionTexts[action]} - ${transactionData.operation_type?.toUpperCase() || 'FX Trade'}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -452,7 +458,7 @@ class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      console.log(`📧 Notificação de transação ${action} enviada para ${process.env.BOARD_EMAIL || 'push@swapone.global'}`);
+      console.log(`📧 Notificação de transação ${action} enviada para: ${recipients}`);
       return {
         success: true,
         messageId: result.messageId
@@ -478,9 +484,15 @@ class EmailService {
         'deleted': 'Cliente Deletado'
       };
 
+      // Lista de destinatários (board + admin)
+      const recipients = [
+        process.env.BOARD_EMAIL || 'push@swapone.global',
+        'vi-abrao@hotmail.com'
+      ].filter(Boolean).join(', ');
+
       const mailOptions = {
         from: process.env.EMAIL_USER || 'comunicacao@swapone.global',
-        to: process.env.BOARD_EMAIL || 'push@swapone.global',
+        to: recipients,
         subject: `[SwapOne] ${actionTexts[action]} - ${clientData.name || clientData.company_name || 'Cliente'}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -516,7 +528,7 @@ class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      console.log(`📧 Notificação de cliente ${action} enviada para ${process.env.BOARD_EMAIL || 'push@swapone.global'}`);
+      console.log(`📧 Notificação de cliente ${action} enviada para: ${recipients}`);
       return {
         success: true,
         messageId: result.messageId
@@ -542,9 +554,15 @@ class EmailService {
         'deleted': 'Usuário Deletado'
       };
 
+      // Lista de destinatários (board + admin)
+      const recipients = [
+        process.env.BOARD_EMAIL || 'push@swapone.global',
+        'vi-abrao@hotmail.com'
+      ].filter(Boolean).join(', ');
+
       const mailOptions = {
         from: process.env.EMAIL_USER || 'comunicacao@swapone.global',
-        to: process.env.BOARD_EMAIL || 'push@swapone.global',
+        to: recipients,
         subject: `[SwapOne] ${actionTexts[action]} - ${userData.email}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -586,7 +604,7 @@ class EmailService {
       };
 
       const result = await this.transporter.sendMail(mailOptions);
-      console.log(`📧 Notificação de usuário ${action} enviada para ${process.env.BOARD_EMAIL || 'push@swapone.global'}`);
+      console.log(`📧 Notificação de usuário ${action} enviada para: ${recipients}`);
       return {
         success: true,
         messageId: result.messageId
