@@ -113,7 +113,8 @@ router.post('/internal', authenticateToken, async (req, res) => {
       fixed_rate_amount,
       quotation_id,
       side,
-      braza_order_id
+      braza_order_id,
+      client_id
     } = req.body;
 
     console.log('🔍 Debug operation payload received:', {
@@ -128,7 +129,8 @@ router.post('/internal', authenticateToken, async (req, res) => {
       fixed_rate_amount,
       braza_order_id,
       quotation_id,
-      side
+      side,
+      client_id_from_body: client_id
     });
 
     // Validação
@@ -152,7 +154,15 @@ router.post('/internal', authenticateToken, async (req, res) => {
 
     // Obter informações do usuário
     const userId = req.user.userId;
-    const clientId = req.user.clientId;
+    // Se client_id foi enviado no body (admin operando em nome de cliente), usar ele
+    // Caso contrário, usar o client_id do usuário logado
+    const clientId = client_id || req.user.clientId;
+
+    console.log('🔍 Debug client ID selection:', {
+      client_id_from_body: client_id,
+      client_id_from_user: req.user.clientId,
+      final_client_id: clientId
+    });
 
     if (!userId || !clientId) {
       return res.status(400).json({
