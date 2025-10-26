@@ -157,6 +157,9 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
     const isInternalTransfer = beneficiary.transfer_method === 'INTERNAL';
     let destinationClientId = null;
     
+    console.log('🔍 Beneficiary transfer method:', beneficiary.transfer_method);
+    console.log('🔍 Is internal transfer:', isInternalTransfer);
+    
     if (isInternalTransfer) {
       // Para transferências internas, buscar o cliente de destino pelo número da conta
       const { data: destinationClient, error: destError } = await supabase
@@ -256,8 +259,10 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
     }
     
     // Para transferências internas, executar automaticamente
-    // Para transferências internas, creditar na carteira de destino
+    console.log('🔍 Verificando se é transferência interna:', { isInternalTransfer, destinationClientId });
+    
     if (isInternalTransfer && destinationClientId) {
+      console.log('🔄 Executando transferência interna para cliente:', destinationClientId);
       walletResults.destination = await walletsService.updateWalletBalance(
         destinationClientId,
         currency,
@@ -340,15 +345,15 @@ router.post('/', authenticateToken, requireClientOrAbove, async (req, res) => {
         beneficiary: beneficiary.beneficiary_name,
         amount: amount,
         currency: currency,
-        status: 'pending', // Todas as transferências ficam pendentes
+        status: isInternalTransfer ? 'executed' : 'pending',
         transfer_type: isInternalTransfer ? 'internal' : 'external',
         destination_client: isInternalTransfer ? destinationClientId : null,
         wallet_updated: {
           source: walletResults.source.success,
-          destination: null // Não há execução automática de destino
+          destination: walletResults.destination ? walletResults.destination.success : null
         }
       },
-      message: 'Transferência criada com sucesso - Aguardando aprovação'
+      message: isInternalTransfer ? 'Transferência interna executada com sucesso' : 'Transferência criada com sucesso - Aguardando aprovação'
     });
     
   } catch (error) {
