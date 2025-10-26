@@ -535,6 +535,48 @@ router.patch('/:id/cancel', authenticateToken, requireAdmin, async (req, res) =>
         amount: parseFloat(transaction.source_amount),
         operation: 'add'
       });
+      
+      // Se for transferência interna, também reverter a carteira do destinatário
+      if (transaction.destination_client_id) {
+        console.log('🔄 Revertendo Transferência Interna - 2 carteiras');
+        console.log(`🔄 Revertendo carteira do destinatário: ${transaction.destination_client_id}`);
+        
+        // Reverter carteira do destinatário (subtrair - cliente não deveria ter recebido)
+        const { data: destinationWallet, error: destinationFetchError } = await supabase
+          .from('wallets')
+          .select('*')
+          .eq('client_id', transaction.destination_client_id)
+          .eq('currency', transaction.source_currency)
+          .single();
+        
+        if (destinationFetchError && destinationFetchError.code !== 'PGRST116') {
+          console.error('❌ Erro ao buscar carteira destinatário:', destinationFetchError);
+          throw destinationFetchError;
+        }
+        
+        if (destinationWallet) {
+          const newDestinationBalance = destinationWallet.balance - parseFloat(transaction.source_amount);
+          const { error: destinationError } = await supabase
+            .from('wallets')
+            .update({ balance: newDestinationBalance, updated_at: new Date().toISOString() })
+            .eq('client_id', transaction.destination_client_id)
+            .eq('currency', transaction.source_currency);
+          
+          if (destinationError) {
+            console.error('❌ Erro ao reverter carteira destinatário:', destinationError);
+            throw destinationError;
+          }
+          
+          console.log(`✅ Carteira destinatário revertida: ${transaction.destination_client_id} - ${transaction.source_amount} ${transaction.source_currency}`);
+        }
+        
+        reversions.wallets.push({
+          currency: transaction.source_currency,
+          amount: parseFloat(transaction.source_amount),
+          operation: 'subtract',
+          client_id: transaction.destination_client_id
+        });
+      }
     }
     
     // 3. Atualizar status da transação para 'cancelado'
