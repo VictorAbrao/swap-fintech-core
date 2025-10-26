@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
 const { authenticateToken, requireClientOrAbove } = require('../middleware/auth');
+const emailService = require('../services/emailService');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
