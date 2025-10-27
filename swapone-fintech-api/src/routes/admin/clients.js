@@ -691,7 +691,10 @@ router.post('/:clientId/beneficiaries', authenticateToken, requireAdmin, async (
       intermediary_bank_swift,
       beneficiary_routing_number,
       beneficiary_account_number_ach,
-      beneficiary_account_type
+      beneficiary_account_type,
+      crypto_protocol,
+      crypto_wallet,
+      internal_account_number
     } = req.body;
 
     if (!beneficiary_name || !transfer_method) {
@@ -717,7 +720,10 @@ router.post('/:clientId/beneficiaries', authenticateToken, requireAdmin, async (
         intermediary_bank_swift,
         beneficiary_routing_number,
         beneficiary_account_number_ach,
-        beneficiary_account_type
+        beneficiary_account_type,
+        crypto_protocol,
+        crypto_wallet,
+        internal_account_number
       }])
       .select()
       .single();
@@ -757,7 +763,10 @@ router.put('/:clientId/beneficiaries/:beneficiaryId', authenticateToken, require
       intermediary_bank_swift,
       beneficiary_routing_number,
       beneficiary_account_number_ach,
-      beneficiary_account_type
+      beneficiary_account_type,
+      crypto_protocol,
+      crypto_wallet,
+      internal_account_number
     } = req.body;
 
     const updates = {};
@@ -773,6 +782,9 @@ router.put('/:clientId/beneficiaries/:beneficiaryId', authenticateToken, require
     if (beneficiary_routing_number !== undefined) updates.beneficiary_routing_number = beneficiary_routing_number;
     if (beneficiary_account_number_ach !== undefined) updates.beneficiary_account_number_ach = beneficiary_account_number_ach;
     if (beneficiary_account_type !== undefined) updates.beneficiary_account_type = beneficiary_account_type;
+    if (crypto_protocol !== undefined) updates.crypto_protocol = crypto_protocol;
+    if (crypto_wallet !== undefined) updates.crypto_wallet = crypto_wallet;
+    if (internal_account_number !== undefined) updates.internal_account_number = internal_account_number;
 
     const { data: beneficiary, error } = await supabase
       .from('beneficiaries')
