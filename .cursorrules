@@ -46,8 +46,9 @@ cd swapone-fintech-front && npm run dev
 ## 📧 Email Configuration
 - **SMTP:** Outlook (smtp-mail.outlook.com:587)
 - **From:** comunicacao@swapone.global
-- **Board Notifications:** push@swapone.global
-- **Environment Variables:** EMAIL_USER, EMAIL_PASS, BOARD_EMAIL
+- **Board Notifications:** push@swapcambio.com (default)
+- **Notification Emails:** Configured via `NOTIFICATION_EMAILS` env var (comma-separated)
+- **Environment Variables:** EMAIL_USER, EMAIL_PASS, NOTIFICATION_EMAILS
 
 ## 🎯 Important Notes
 - Always check if servers are running on correct ports before making changes

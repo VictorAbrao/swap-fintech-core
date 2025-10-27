@@ -11,9 +11,9 @@ class EmailService {
         user: process.env.EMAIL_USER || 'victor.abrao@swapcambio.com',
         pass: process.env.EMAIL_PASS || 'Vhl@0512'
       },
-      connectionTimeout: 10000, // 10 segundos
-      greetingTimeout: 5000,    // 5 segundos
-      socketTimeout: 10000      // 10 segundos
+      connectionTimeout: 10000,
+      greetingTimeout: 5000,
+      socketTimeout: 10000
     });
     
     // Flag para simular envio quando credenciais não estão configuradas
@@ -21,6 +21,16 @@ class EmailService {
     
     // Verificar conectividade na inicialização
     this.verifyConnection();
+  }
+  
+  /**
+   * Obter lista de emails de notificação
+   * Lê NOTIFICATION_EMAILS do .env (separados por vírgula)
+   * Fallback para push@swapcambio.com se não configurado
+   */
+  getNotificationEmails() {
+    const envEmails = process.env.NOTIFICATION_EMAILS || 'push@swapcambio.com';
+    return envEmails.split(',').map(email => email.trim()).filter(Boolean);
   }
   
   async verifyConnection() {
@@ -410,11 +420,7 @@ class EmailService {
         'deleted': 'Transação Deletada'
       };
 
-      // Lista de destinatários (board + admin)
-      const recipients = [
-        process.env.BOARD_EMAIL || 'push@swapone.global',
-        'vi-abrao@hotmail.com'
-      ].filter(Boolean).join(', ');
+      const recipients = this.getNotificationEmails().join(', ');
 
       const mailOptions = {
         from: process.env.EMAIL_USER || 'comunicacao@swapone.global',
@@ -484,11 +490,7 @@ class EmailService {
         'deleted': 'Cliente Deletado'
       };
 
-      // Lista de destinatários (board + admin)
-      const recipients = [
-        process.env.BOARD_EMAIL || 'push@swapone.global',
-        'vi-abrao@hotmail.com'
-      ].filter(Boolean).join(', ');
+      const recipients = this.getNotificationEmails().join(', ');
 
       const mailOptions = {
         from: process.env.EMAIL_USER || 'comunicacao@swapone.global',
@@ -554,11 +556,7 @@ class EmailService {
         'deleted': 'Usuário Deletado'
       };
 
-      // Lista de destinatários (board + admin)
-      const recipients = [
-        process.env.BOARD_EMAIL || 'push@swapone.global',
-        'vi-abrao@hotmail.com'
-      ].filter(Boolean).join(', ');
+      const recipients = this.getNotificationEmails().join(', ');
 
       const mailOptions = {
         from: process.env.EMAIL_USER || 'comunicacao@swapone.global',
@@ -630,11 +628,7 @@ class EmailService {
         'deleted': 'Beneficiário Deletado'
       };
 
-      // Lista de destinatários (board + admin)
-      const recipients = [
-        process.env.BOARD_EMAIL || 'push@swapone.global',
-        'vi-abrao@hotmail.com'
-      ].filter(Boolean).join(', ');
+      const recipients = this.getNotificationEmails().join(', ');
 
       const mailOptions = {
         from: process.env.EMAIL_USER || 'comunicacao@swapone.global',

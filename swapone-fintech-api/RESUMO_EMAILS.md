@@ -2,9 +2,9 @@
 
 ## ✅ Status da Implementação
 
-Todas as notificações foram implementadas e estão configuradas para enviar para:
-- **push@swapone.global** (BOARD_EMAIL)
-- **vi-abrao@hotmail.com** (NOVO)
+Todas as notificações foram implementadas e estão configuradas para enviar para emails definidos na variável de ambiente `NOTIFICATION_EMAILS`.
+
+Por padrão, notificações são enviadas para: **push@swapcambio.com**
 
 ## 📋 Tipos de Notificações Implementadas
 
@@ -39,7 +39,7 @@ Para **RECEBER os emails**, você precisa fazer ações REAIS no sistema:
 1. Acesse o painel admin
 2. Vá em "Clientes" → "Criar Novo Cliente"
 3. Preencha os dados e salve
-4. **Email será enviado para:** push@swapone.global, vi-abrao@hotmail.com
+4. **Email será enviado para:** emails configurados em `NOTIFICATION_EMAILS`
 
 ### Teste 2: Editar Cliente
 1. Vá em "Clientes" → Selecione um cliente
@@ -69,14 +69,27 @@ Para **RECEBER os emails**, você precisa fazer ações REAIS no sistema:
 
 ## 🔧 Configuração de Email
 
+### Variável de Ambiente: `.env`
+
+Configure a variável `NOTIFICATION_EMAILS` no arquivo `.env`:
+
+```bash
+NOTIFICATION_EMAILS=push@swapcambio.com,vi-abrao@hotmail.com,outro@email.com
+```
+
+**Importante:**
+- Separe múltiplos emails por vírgula
+- Se não configurado, o padrão é `push@swapcambio.com`
+- Os emails são lidos automaticamente pelo sistema
+
 ### Arquivo: `swapone-fintech-api/src/services/emailService.js`
 
 ```javascript
-// Lista de destinatários (board + admin)
-const recipients = [
-  process.env.BOARD_EMAIL || 'push@swapone.global',
-  'vi-abrao@hotmail.com'
-].filter(Boolean).join(', ');
+// Função auxiliar para obter emails de notificação
+getNotificationEmails() {
+  const envEmails = process.env.NOTIFICATION_EMAILS || 'push@swapcambio.com';
+  return envEmails.split(',').map(email => email.trim()).filter(Boolean);
+}
 ```
 
 ## ⚠️ Nota Importante

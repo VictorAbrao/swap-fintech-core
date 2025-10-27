@@ -22,12 +22,20 @@ O sistema está funcionando em **modo de simulação** porque as credenciais do 
 # Editar arquivo .env
 nano .env
 
-# Substituir a linha:
-EMAIL_PASS=your-app-password-here
+# Adicione ou atualize as seguintes variáveis:
 
-# Por:
+# Credenciais de email (Gmail App Password)
+EMAIL_USER=swapone.fintech@gmail.com
 EMAIL_PASS=sua-senha-de-16-caracteres-aqui
+
+# Emails que receberão notificações (separados por vírgula)
+NOTIFICATION_EMAILS=push@swapcambio.com,vi-abrao@hotmail.com
 ```
+
+**Importante sobre NOTIFICATION_EMAILS:**
+- Separe múltiplos emails por vírgula
+- Se não configurado, o padrão é `push@swapcambio.com`
+- Exemplo para múltiplos emails: `email1@example.com,email2@example.com,email3@example.com`
 
 ### 4. **Reiniciar Servidor**
 ```bash
