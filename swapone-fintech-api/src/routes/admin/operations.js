@@ -374,8 +374,6 @@ router.post('/internal', authenticateToken, async (req, res) => {
               try {
                 console.log(`🏦 Executing brokerage for order ${brazaOrderIdNumber}`);
                 
-                // Usar o exchange_rate da operação (que vem do preview_quotation)
-                // Este é o final_quotation que recebemos do Braza Bank no preview
                 const finalQuotation = exchange_rate;
                 
                 console.log(`📊 Using exchange_rate (from preview_quotation) for brokerage: ${finalQuotation}`);
@@ -400,7 +398,6 @@ router.post('/internal', authenticateToken, async (req, res) => {
                 }
               } catch (brokerageError) {
                 console.error('❌ Error executing brokerage:', brokerageError);
-                // Não falhar a operação se o brokerage falhar
               }
             } else {
               console.warn(`⚠️ Failed to get order details: ${orderDetailsResult.error}`);
@@ -409,7 +406,6 @@ router.post('/internal', authenticateToken, async (req, res) => {
             console.error('❌ Error getting order details:', orderDetailsError);
           }
           
-          // Atualizar status da operação para confirmar execução
           await operationsService.updateOperationStatus(operationResult.data.id, 'executed', {
             braza_executed_at: new Date().toISOString(),
             braza_execution_result: brazaExecuteResult.data
@@ -419,7 +415,6 @@ router.post('/internal', authenticateToken, async (req, res) => {
         }
       } catch (executeError) {
         console.error('❌ Auto-execute Braza order error:', executeError);
-        // Não falhar a operação se a execução do Braza falhar
       }
     }
 
