@@ -103,3 +103,4 @@ Isso mostrará quando tentativas de envio de email são feitas.
 - **Commit:** 5f4144d
 - **Repositório:** https://github.com/VictorAbrao/swap-fintech-core
 
+

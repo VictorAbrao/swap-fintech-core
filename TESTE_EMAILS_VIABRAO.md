@@ -99,3 +99,4 @@ EMAIL_USER=comunicacao@swapone.global
 EMAIL_PASS=sua_senha
 ```
 
+

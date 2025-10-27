@@ -386,10 +386,11 @@ router.post('/internal', authenticateToken, async (req, res) => {
                 
                 const brokerageResult = await brazaBankService.executeBrokerage(
                   brazaOrderIdNumber,
-                  finalQuotation, // Usar final_quotation do Braza Bank
+                  finalQuotation,
                   userId,
                   clientId,
-                  `brokerage-${Date.now()}`
+                  `brokerage-${Date.now()}`,
+                  source_currency
                 );
 
                 if (brokerageResult.success) {

@@ -586,7 +586,7 @@ class BrazaBankService {
   /**
    * Executar brokerage no Braza Bank após get_order
    */
-  async executeBrokerage(brazaOrderId, finalQuotation, userId = null, clientId = null, quotationId = null) {
+  async executeBrokerage(brazaOrderId, finalQuotation, userId = null, clientId = null, quotationId = null, currency = null) {
     try {
       await this.ensureAuthenticated();
 
@@ -596,12 +596,24 @@ class BrazaBankService {
 
       console.log(`🏦 Executing brokerage in Braza Bank for order: ${brazaOrderId}`);
 
+      let cod_carteira;
+      if (currency === 'USDC') {
+        cod_carteira = '73';
+        console.log(`💰 Using cod_carteira 73 for USDC`);
+      } else if (currency === 'USDT') {
+        cod_carteira = '76';
+        console.log(`💰 Using cod_carteira 76 for USDT`);
+      } else {
+        cod_carteira = process.env.BRAZA_CARTEIRA_CODE || "622";
+        console.log(`💰 Using default cod_carteira ${cod_carteira} for ${currency || 'unknown'}`);
+      }
+
       const payload = {
         contract_rate: 0,
         customer: process.env.BRAZA_CUSTOMER_ID || "32822",
         order: brazaOrderId,
         rate: parseFloat(finalQuotation),
-        cod_carteira: process.env.BRAZA_CARTEIRA_CODE || "622"
+        cod_carteira: cod_carteira
       };
 
       console.log(`📊 Brokerage payload:`, payload);
@@ -626,7 +638,7 @@ class BrazaBankService {
       
       if (error.response?.status === 401) {
         this.accessToken = null;
-        return this.executeBrokerage(brazaOrderId, finalQuotation, userId, clientId, quotationId);
+        return this.executeBrokerage(brazaOrderId, finalQuotation, userId, clientId, quotationId, currency);
       }
 
       return {

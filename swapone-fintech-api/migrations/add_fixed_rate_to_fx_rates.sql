@@ -11,3 +11,4 @@ COMMENT ON COLUMN fx_rates.fixed_rate_amount IS 'Fixed rate amount in target cur
 -- Update existing records to have 0 as default
 UPDATE fx_rates SET fixed_rate_amount = 0.00 WHERE fixed_rate_amount IS NULL;
 
+

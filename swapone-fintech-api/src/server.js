@@ -67,23 +67,45 @@ app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
-app.use(cors({
-  origin: [
-    'http://localhost:5002', 
-    'http://72.60.61.249:5002', 
-    'http://localhost:5001', 
-    'http://72.60.61.249:5001',
-    'http://app.swapone.global',
-    'https://app.swapone.global',
-    'http://app.swapone.global:5001',
-    'https://app.swapone.global:5001',
-    'http://api.swapcambio.com',
-    'https://api.swapcambio.com'
-  ],
+const corsOptions = {
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'http://localhost:5002', 
+      'http://72.60.61.249:5002', 
+      'http://localhost:5001', 
+      'http://72.60.61.249:5001',
+      'http://app.swapone.global',
+      'https://app.swapone.global',
+      'http://app.swapone.global:5001',
+      'https://app.swapone.global:5001',
+      'http://api.swapcambio.com',
+      'https://api.swapcambio.com'
+    ];
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
+};
+
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/public/webhook')) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+  }
+  next();
+});
+
+app.use(cors(corsOptions));
 app.use(morgan('combined'));
 app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
