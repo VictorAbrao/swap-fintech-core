@@ -44,3 +44,4 @@ console.log('   • Não compromete outras colunas');
 console.log('   • Mantém proporção equilibrada');
 console.log('');
 console.log('🚀 TABELA AGORA TEM MELHOR LEGIBILIDADE!');
+

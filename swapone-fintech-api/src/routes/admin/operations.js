@@ -374,9 +374,9 @@ router.post('/internal', authenticateToken, async (req, res) => {
               try {
                 console.log(`🏦 Executing brokerage for order ${brazaOrderIdNumber}`);
                 
-                const finalQuotation = exchange_rate;
+                const finalQuotation = base_rate;
                 
-                console.log(`📊 Using exchange_rate (from preview_quotation) for brokerage: ${finalQuotation}`);
+                console.log(`📊 Using base_rate (from Braza Bank) for brokerage: ${finalQuotation}`);
                 
                 if (!finalQuotation || finalQuotation === null) {
                   throw new Error('No valid rate found for brokerage');
