@@ -29,6 +29,7 @@ class MockDataService {
     ];
 
     this.accountBalances = {};
+    this.updateInterval = null;
 
     this.transferHistory = {
       '76e63666-921c-4565-a82b-a13044af064e': [
@@ -116,19 +117,28 @@ class MockDataService {
     console.log(`💰 Account balances updated at ${new Date().toISOString()}`);
   }
 
-  // Iniciar atualizações por hora
   startHourlyUpdates() {
-    // Atualizar imediatamente
+    if (this.updateInterval) {
+      clearInterval(this.updateInterval);
+    }
+
     this.updateExchangeRates();
     this.updateAccountBalances();
 
-    // Atualizar a cada hora
-    setInterval(() => {
+    this.updateInterval = setInterval(() => {
       this.updateExchangeRates();
       this.updateAccountBalances();
-    }, 60 * 60 * 1000); // 1 hora
+    }, 60 * 60 * 1000);
 
     console.log('⏰ Hourly updates started for mock data');
+  }
+
+  stopHourlyUpdates() {
+    if (this.updateInterval) {
+      clearInterval(this.updateInterval);
+      this.updateInterval = null;
+      console.log('⏰ Hourly updates stopped');
+    }
   }
 
   // Obter saldos de uma conta

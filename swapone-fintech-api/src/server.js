@@ -239,7 +239,7 @@ app.use('*', (req, res) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 SwapOne Fintech API running on port ${PORT}`);
   console.log(`📚 Public API Docs (Clientes): http://72.60.61.249:${PORT}/api-docs`);
   console.log(`🔒 Admin API Docs (Completa): http://72.60.61.249:${PORT}/admin/api-docs`);
@@ -247,8 +247,25 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🌐 Environment: ${process.env.NODE_ENV}`);
 });
 
-module.exports = app;
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+});
 
+process.on('SIGINT', () => {
+  console.log('SIGINT signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
 
 module.exports = app;
 
