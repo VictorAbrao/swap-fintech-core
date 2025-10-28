@@ -238,27 +238,20 @@ function calculateKPIs(operations, exchangeRates) {
       const markupPercentage = parseFloat(op.markup_percentage) || 0;
       const baseAmount = parseFloat(op.source_amount) || 0;
       const finalAmount = parseFloat(op.target_amount) || 0;
+      const baseRate = parseFloat(op.base_rate) || 1;
       
-      // Lucro = diferença entre valor final e valor base
-      profit = finalAmount - (baseAmount * (op.base_rate || 1));
-      volume = Math.max(baseAmount, finalAmount);
+      // Lucro = diferença entre valor final e valor base (em BRL)
+      profit = finalAmount - (baseAmount * baseRate);
+      volume = finalAmount;
       
-      // Converter para USD
-      const sourceRate = exchangeRates[op.source_currency] || 1;
-      const targetRate = exchangeRates[op.target_currency] || 1;
-      
-      profit = profit * targetRate;
-      volume = volume * sourceRate;
+      // NÃO converter para USD - lucro já está em BRL
     } else if (op.operation_type === 'transfer') {
       // Para transferências, lucro vem da taxa fixa
       const feeAmount = parseFloat(op.fee_amount) || 0;
       profit = feeAmount;
       volume = parseFloat(op.source_amount) || 0;
       
-      // Converter para USD
-      const rate = exchangeRates[op.source_currency] || 1;
-      profit = profit * rate;
-      volume = volume * rate;
+      // NÃO converter para USD - valores já estão na moeda correta
     }
     
     // Acumular totais
