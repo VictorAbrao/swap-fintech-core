@@ -90,7 +90,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'accept', 'accept-language', 'cache-control', 'pragma', 'origin', 'referer', 'sec-ch-ua', 'sec-ch-ua-mobile', 'sec-ch-ua-platform', 'sec-fetch-dest', 'sec-fetch-mode', 'sec-fetch-site', 'user-agent']
 };
 
 app.use((req, res, next) => {
@@ -105,6 +105,7 @@ app.use((req, res, next) => {
   next();
 });
 
+app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
 app.use(morgan('combined'));
 app.use(limiter);
