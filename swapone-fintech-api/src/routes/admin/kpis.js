@@ -236,13 +236,13 @@ function calculateKPIs(operations, exchangeRates) {
     if (op.operation_type === 'fx_trade' || op.operation_type === 'arbitrage') {
       // Para FX Trade e Arbitragem, lucro vem do markup aplicado
       const markupPercentage = parseFloat(op.markup_percentage) || 0;
-      const baseAmount = parseFloat(op.source_amount) || 0;
-      const finalAmount = parseFloat(op.target_amount) || 0;
+      const sourceAmount = parseFloat(op.source_amount) || 0;
       const baseRate = parseFloat(op.base_rate) || 1;
+      const finalRate = parseFloat(op.final_rate) || 1;
       
-      // Lucro = diferença entre valor final e valor base (em BRL)
-      profit = finalAmount - (baseAmount * baseRate);
-      volume = finalAmount;
+      // Lucro = (taxa_cliente - taxa_base) * valor_origem (em BRL)
+      profit = (finalRate - baseRate) * sourceAmount;
+      volume = parseFloat(op.target_amount) || 0;
       
       // NÃO converter para USD - lucro já está em BRL
     } else if (op.operation_type === 'transfer') {
