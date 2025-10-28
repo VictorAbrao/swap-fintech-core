@@ -16,3 +16,4 @@ UPDATE fx_rates SET fixed_rate_amount = 0.00 WHERE fixed_rate_amount IS NULL;
 
 
 
+
