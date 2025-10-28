@@ -5,91 +5,6 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function fixFxTradeTargetAmount() {
-  try {
-    console.log('🔍 Buscando operações FX Trade com target_amount incorreto...');
-    
-    const { data: operations, error: fetchError } = await supabase
-      .from('operations_history')
-      .select('*')
-      .eq('operation_type', 'fx_trade')
-      .is('deleted_at', null)
-      .eq('is_deleted', false)
-      .order('created_at', { ascending: false });
-    
-    if (fetchError) {
-      console.error('❌ Erro ao buscar operações:', fetchError);
-      return;
-    }
-    
-    console.log(`📊 Encontradas ${operations.length} operações FX Trade`);
-    
-    let fixedCount = 0;
-    const corrections = [];
-    
-    for (const op of operations) {
-      const sourceAmount = parseFloat(op.source_amount);
-      const exchangeRate = parseFloat(op.exchange_rate);
-      const fixedRateAmount = parseFloat(op.fixed_rate_amount) || 0;
-      const currentTargetAmount = parseFloat(op.target_amount);
-      
-      // Calcular o valor correto
-      const correctTargetAmount = sourceAmount * exchangeRate + fixedRateAmount;
-      
-      // Verificar se o valor atual está incorreto
-      // Consideramos incorreto se a diferença for maior que 1% do valor correto
-      const difference = Math.abs(currentTargetAmount - correctTargetAmount);
-      const tolerance = correctTargetAmount * 0.01;
-      
-      if (difference > tolerance && !isNaN(sourceAmount) && !isNaN(exchangeRate)) {
-        corrections.push({
-          operation: op,
-          oldValue: currentTargetAmount,
-          newValue: correctTargetAmount,
-          difference
-        });
-      }
-    }
-    
-    console.log(`🔧 Encontradas ${corrections.length} operações para corrigir`);
-    
-    for (const correction of corrections) {
-      const op = correction.operation;
-      
-      console.log(`\n📝 Corrigindo operação ${op.id}:`);
-      console.log(`   Cliente: ${op.client_id}`);
-      console.log(`   Valor antigo: ${correction.oldValue}`);
-      console.log(`   Valor novo: ${correction.newValue}`);
-      console.log(`   Diferença: ${correction.difference}`);
-      
-      const updateResult = await supabase
-        .from('operations_history')
-        .update({
-          target_amount: correction.newValue,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', op.id);
-      
-      if (!updateResult.error) {
-        fixedCount++;
-        console.log(`   ✅ Operação corrigida`);
-      } else {
-        console.error(`   ❌ Erro ao corrigir: ${updateResult.error.message}`);
-      }
-    }
-    
-    console.log(`\n✅ Total de operações corrigidas: ${fixedCount}`);
-    
-    if (fixedCount > 0) {
-      console.log('\n🔄 Agora vamos recalcular os saldos das carteiras...');
-      await recalculateWalletBalances();
-    }
-    
-  } catch (error) {
-    console.error('❌ Erro ao corrigir operações:', error);
-  }
-}
-
 async function recalculateWalletBalances() {
   try {
     console.log('🔍 Buscando todas as carteiras...');
@@ -132,7 +47,6 @@ async function recalculateWalletBalances() {
           const side = tx.side || 'buy';
           
           if (side === 'sell') {
-            // Venda: subtrai source_currency, adiciona target_currency
             if (tx.source_currency === currency) {
               newBalance -= tx.source_amount;
             }
@@ -140,7 +54,6 @@ async function recalculateWalletBalances() {
               newBalance += tx.target_amount;
             }
           } else {
-            // Compra: adiciona source_currency, subtrai target_currency
             if (tx.source_currency === currency) {
               newBalance += tx.source_amount;
             }
@@ -197,9 +110,9 @@ async function recalculateWalletBalances() {
 }
 
 if (require.main === module) {
-  fixFxTradeTargetAmount()
+  recalculateWalletBalances()
     .then(() => {
-      console.log('\n🎉 Correção concluída!');
+      console.log('\n🎉 Recálculo concluído!');
       process.exit(0);
     })
     .catch((error) => {
@@ -208,5 +121,5 @@ if (require.main === module) {
     });
 }
 
-module.exports = { fixFxTradeTargetAmount, recalculateWalletBalances };
+module.exports = { recalculateWalletBalances };
 
