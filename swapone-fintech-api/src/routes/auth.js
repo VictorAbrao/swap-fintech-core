@@ -100,11 +100,16 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // clients(*) retorna um array, pegar o primeiro elemento
+    const clientData = Array.isArray(profile.clients) && profile.clients.length > 0 
+      ? profile.clients[0] 
+      : null;
+
     // Buscar dados do Braza Bank se o usuário tiver braza_id
     let brazaData = null;
-    if (profile.clients?.braza_id) {
+    if (clientData?.braza_id) {
       try {
-        brazaData = await brazaBankService.getClientInfo(profile.clients.braza_id);
+        brazaData = await brazaBankService.getClientInfo(clientData.braza_id);
       } catch (error) {
         console.log('Could not fetch Braza Bank data for user:', data.user.email);
       }
@@ -128,18 +133,18 @@ router.post('/login', async (req, res) => {
       email: data.user.email,
       role: profile.role,
       client_id: profile.client_id,
-      client_name: profile.clients?.name,
+      client_name: clientData?.name,
       user_name: profile.user_name,
       twofa_enabled: profile.twofa_enabled,
       created_at: data.user.created_at,
       last_sign_in_at: data.user.last_sign_in_at,
       // Dados do cliente
-      client: profile.clients ? {
-        id: profile.clients.id,
-        name: profile.clients.name,
-        cpf_cnpj: profile.clients.cpf_cnpj,
-        braza_id: profile.clients.braza_id,
-        created_at: profile.clients.created_at
+      client: clientData ? {
+        id: clientData.id,
+        name: clientData.name,
+        cpf_cnpj: clientData.cnpj,
+        braza_id: clientData.braza_id,
+        created_at: clientData.created_at
       } : null,
       // Dados do Braza Bank
       braza_data: brazaData,
@@ -196,7 +201,7 @@ router.post('/login', async (req, res) => {
  */
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    // Buscar perfil do usuário com dados do cliente
+    // Buscar perfil do usuário
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*, clients(*)')
@@ -210,8 +215,10 @@ router.get('/me', authenticateToken, async (req, res) => {
       });
     }
 
-    // Usar dados do cliente do join
-    const clientData = profile.clients;
+    // clients(*) retorna um array, pegar o primeiro elemento
+    const clientData = Array.isArray(profile.clients) && profile.clients.length > 0 
+      ? profile.clients[0] 
+      : null;
     
     if (!clientData && profile.client_id) {
       console.log('⚠️ Client data not found in profile for user:', req.user.email, 'client_id:', profile.client_id);
