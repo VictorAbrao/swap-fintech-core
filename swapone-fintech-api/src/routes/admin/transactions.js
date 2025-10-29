@@ -584,6 +584,31 @@ router.patch('/:id/cancel', authenticateToken, requireAdmin, async (req, res) =>
           client_id: transaction.destination_client_id
         });
       }
+    } else if (transaction.operation_type === 'withdrawal') {
+      console.log('🔄 Revertendo Saque - 1 carteira');
+      
+      const currency = transaction.source_currency || transaction.target_currency;
+      const amount = transaction.source_amount || transaction.target_amount;
+      
+      console.log(`💰 Revertendo SAQUE: Adicionar ${amount} ${currency}`);
+      
+      const addResult = await walletsService.updateWalletBalance(
+        transaction.client_id,
+        currency,
+        parseFloat(amount),
+        'add'
+      );
+      
+      if (!addResult.success) {
+        console.error('❌ Erro ao reverter saque:', addResult.error);
+        throw new Error(addResult.error);
+      }
+      
+      reversions.wallets.push({
+        currency: currency,
+        amount: parseFloat(amount),
+        operation: 'add'
+      });
     }
     
     // 3. Atualizar status da transação para 'cancelado'
@@ -968,6 +993,32 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req, res) => {
       reversions.wallets.push({
         currency: transaction.source_currency,
         amount: parseFloat(transaction.source_amount),
+        operation: 'add'
+      });
+    } else if (transaction.operation_type === 'withdrawal') {
+      console.log('🔄 Revertendo Saque - 1 carteira');
+      
+      // Saque: reverter = adicionar de volta o valor que foi subtraído
+      const currency = transaction.source_currency || transaction.target_currency;
+      const amount = transaction.source_amount || transaction.target_amount;
+      
+      console.log(`💰 Revertendo SAQUE: Adicionar ${amount} ${currency}`);
+      
+      const addResult = await walletsService.updateWalletBalance(
+        transaction.client_id,
+        currency,
+        parseFloat(amount),
+        'add'
+      );
+      
+      if (!addResult.success) {
+        console.error('❌ Erro ao reverter saque:', addResult.error);
+        throw new Error(addResult.error);
+      }
+      
+      reversions.wallets.push({
+        currency: currency,
+        amount: parseFloat(amount),
         operation: 'add'
       });
     }

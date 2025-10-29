@@ -388,7 +388,8 @@ router.post('/internal', authenticateToken, async (req, res) => {
                   userId,
                   clientId,
                   `brokerage-${Date.now()}`,
-                  source_currency
+                  source_currency,
+                  side
                 );
 
                 if (brokerageResult.success) {

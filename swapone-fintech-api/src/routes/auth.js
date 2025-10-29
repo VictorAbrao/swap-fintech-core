@@ -221,6 +221,12 @@ router.get('/me', authenticateToken, async (req, res) => {
       if (!clientError && clients && clients.length > 0) {
         clientData = clients[0];
       }
+      
+      if (!clientData) {
+        console.error('❌ Client not found for user:', req.user.email, 'client_id:', profile.client_id);
+      }
+    } else {
+      console.log('⚠️ No client_id in profile for user:', req.user.email);
     }
 
     // Buscar dados do Braza Bank se o usuário tiver braza_id
@@ -248,7 +254,7 @@ router.get('/me', authenticateToken, async (req, res) => {
       client: clientData ? {
         id: clientData.id,
         name: clientData.name,
-        cpf_cnpj: clientData.cnpj,
+        cpf_cnpj: clientData.cpf_cnpj || clientData.cnpj,
         braza_id: clientData.braza_id,
         created_at: clientData.created_at
       } : null,

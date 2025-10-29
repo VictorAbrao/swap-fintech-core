@@ -227,49 +227,34 @@ class FxRatesService {
       const baseRate = parseFloat(brazaData.final_quotation);
       console.log(`📊 Always using Braza Bank final_quotation as base: ${baseRate}`);
       
-      // Para operações de venda, inverter a cotação PRIMEIRO
+      // Usar a mesma taxa para compra e venda (cálculo igual)
       let workingRate = baseRate;
       console.log(`🔍 Operation: ${operation}, Base rate: ${baseRate}`);
-      if (operation === 'sell') {
-        workingRate = 1 / baseRate;
-        console.log(`🔄 Inverted rate for sell operation: ${baseRate} → ${workingRate}`);
-      } else {
-        console.log(`✅ Buy operation - keeping rate: ${workingRate}`);
-      }
       
-      // Aplicar markup total (sistema + cliente) sobre a taxa (já invertida se necessário)
+      // Aplicar markup total (sistema + cliente) sobre a taxa
       let finalRate = workingRate;
       if (totalMarkupPercentage && parseFloat(totalMarkupPercentage) > 0) {
         finalRate = clientMarkupsService.applyMarkup(workingRate, totalMarkupPercentage);
         console.log(`📈 Applied total markup (system: ${systemRate}% + client: ${clientMarkupPercentage}% = ${totalMarkupPercentage}%): ${workingRate} + ${totalMarkupPercentage}% = ${finalRate}`);
       }
       
-      // Aplicar spread do sistema se houver
+      // Aplicar spread do sistema se houver (igual para compra e venda)
       if (systemSpreadBps && systemSpreadBps > 0) {
-        const spreadDecimal = systemSpreadBps / 10000; // Converter bps para decimal
-        if (operation === 'buy') {
-          finalRate = finalRate * (1 + spreadDecimal);
-        } else {
-          finalRate = finalRate * (1 - spreadDecimal);
-        }
+        const spreadDecimal = systemSpreadBps / 10000;
+        finalRate = finalRate * (1 + spreadDecimal);
         console.log(`💰 Applied system spread: ${finalRate / (1 + spreadDecimal)} + ${systemSpreadBps}bps = ${finalRate} (${operation})`);
       }
       
       // Calcular valor base com markup percentual
       let convertedAmount = parseFloat(amount) * finalRate;
       
-      // Adicionar taxa fixa quando aplicável (sistema + cliente)
+      // Adicionar taxa fixa quando aplicável (sistema + cliente) - igual para compra e venda
       const totalFixedRateAmount = systemFixedRateAmount + clientFixedRateAmount;
       if (totalFixedRateAmount && totalFixedRateAmount > 0) {
-        // Para operações de compra (buy), converter taxa fixa de USDT para BRL e adicionar
-        if (operation === 'buy') {
-          // Converter taxa fixa de USDT para BRL usando a taxa base (sem markup)
-          const fixedRateInBrl = totalFixedRateAmount * parseFloat(brazaData.final_quotation);
-          convertedAmount += fixedRateInBrl;
-          console.log(`💰 Added fixed rate amount: ${totalFixedRateAmount} USDT → ${fixedRateInBrl} BRL (using base rate: ${brazaData.final_quotation}) = ${convertedAmount}`);
-        }
-        // Para operações de venda (sell), a taxa fixa já está incluída no markup percentual
-        // (não adicionar novamente para evitar duplicação)
+        // Converter taxa fixa de USDT para BRL usando a taxa base (sem markup)
+        const fixedRateInBrl = totalFixedRateAmount * parseFloat(brazaData.final_quotation);
+        convertedAmount += fixedRateInBrl;
+        console.log(`💰 Added fixed rate amount: ${totalFixedRateAmount} USDT → ${fixedRateInBrl} BRL (using base rate: ${brazaData.final_quotation}) = ${convertedAmount} (${operation})`);
       }
 
       return {

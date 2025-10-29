@@ -68,11 +68,15 @@ router.post('/', authenticateToken, async (req, res) => {
     const finalRate = baseRate + markupAmount + fixed_rate_amount;
     const totalBRL = amount * finalRate;
 
-    if (side === 'sell') {
+    if (side === 'buy') {
+      // Compra: adicionar USDT/USDC e subtrair BRL
+      await walletsService.updateWalletBalance(clientId, fromCurrency, amount, 'add');
+      await walletsService.updateWalletBalance(clientId, toCurrency, totalBRL, 'subtract');
+    } else {
+      // Venda: subtrair USDT/USDC e adicionar BRL
       await walletsService.updateWalletBalance(clientId, fromCurrency, amount, 'subtract');
+      await walletsService.updateWalletBalance(clientId, toCurrency, totalBRL, 'add');
     }
-    
-    await walletsService.updateWalletBalance(clientId, toCurrency, totalBRL, 'add');
 
     const operationData = {
       client_id: clientId,
@@ -101,10 +105,16 @@ router.post('/', authenticateToken, async (req, res) => {
     if (opError) {
       console.error('Error creating operation:', opError);
       
-      if (side === 'sell') {
+      // Reverter as mudanças das carteiras em caso de erro
+      if (side === 'buy') {
+        // Reverter compra: subtrair USDT/USDC e adicionar BRL
+        await walletsService.updateWalletBalance(clientId, fromCurrency, amount, 'subtract');
+        await walletsService.updateWalletBalance(clientId, toCurrency, totalBRL, 'add');
+      } else {
+        // Reverter venda: adicionar USDT/USDC e subtrair BRL
         await walletsService.updateWalletBalance(clientId, fromCurrency, amount, 'add');
+        await walletsService.updateWalletBalance(clientId, toCurrency, totalBRL, 'subtract');
       }
-      await walletsService.updateWalletBalance(clientId, toCurrency, totalBRL, 'subtract');
       
       return res.status(500).json({
         success: false,
