@@ -196,10 +196,10 @@ router.post('/login', async (req, res) => {
  */
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    // Buscar perfil do usuário
+    // Buscar perfil do usuário com dados do cliente
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('*')
+      .select('*, clients(*)')
       .eq('id', req.user.id)
       .single();
 
@@ -210,23 +210,11 @@ router.get('/me', authenticateToken, async (req, res) => {
       });
     }
 
-    // Buscar dados do cliente separadamente
-    let clientData = null;
-    if (profile.client_id) {
-      const { data: clients, error: clientError } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('id', profile.client_id);
-      
-      if (!clientError && clients && clients.length > 0) {
-        clientData = clients[0];
-      }
-      
-      if (!clientData) {
-        console.error('❌ Client not found for user:', req.user.email, 'client_id:', profile.client_id);
-      }
-    } else {
-      console.log('⚠️ No client_id in profile for user:', req.user.email);
+    // Usar dados do cliente do join
+    const clientData = profile.clients;
+    
+    if (!clientData && profile.client_id) {
+      console.log('⚠️ Client data not found in profile for user:', req.user.email, 'client_id:', profile.client_id);
     }
 
     // Buscar dados do Braza Bank se o usuário tiver braza_id
@@ -254,7 +242,7 @@ router.get('/me', authenticateToken, async (req, res) => {
       client: clientData ? {
         id: clientData.id,
         name: clientData.name,
-        cpf_cnpj: clientData.cpf_cnpj || clientData.cnpj,
+        cpf_cnpj: clientData.cnpj,
         braza_id: clientData.braza_id,
         created_at: clientData.created_at
       } : null,
