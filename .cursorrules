@@ -71,6 +71,29 @@ cd swapone-fintech-front && npm run dev
 - Implement proper error handling
 - Use soft delete instead of hard delete
 
+## 🌍 Translation & i18n Rules
+- **NEVER use hardcoded text in the user interface**
+- **ALWAYS use the translation system (`t()` function) for ALL user-facing text**
+- **This includes but is not limited to:**
+  - Menu names and navigation items
+  - Table titles and column headers
+  - Button labels
+  - Modal titles and content
+  - Form labels and placeholders
+  - Error messages
+  - Success messages
+  - Tooltips
+  - Filter labels and options
+  - Status names
+  - Operation type names
+  - Any text visible to the end user
+- **Add missing translation keys** to both `swapone-fintech-front/src/locales/pt-BR.json` and `swapone-fintech-front/src/locales/en.json`
+- **When creating new pages or components**, immediately translate ALL text, never leave hardcoded Portuguese/English
+- **The only exceptions** are:
+  - Variable values (like `{client.name}`)
+  - Technical identifiers (like API endpoints, database fields)
+  - Code comments
+
 ## 🔄 Git Workflow
 - **ALWAYS** run `./auto-commit.sh` after completing any development task
 - **ALWAYS** commit changes to GitHub at the end of each request
