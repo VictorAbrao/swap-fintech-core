@@ -101,22 +101,30 @@ router.post('/login', async (req, res) => {
     }
 
     // Buscar dados do cliente separadamente usando service role
+    // Criar uma nova instância do Supabase para garantir que use as variáveis de ambiente corretas
     let clientData = null;
     if (profile.client_id) {
-      console.log('🔍 Login - buscando cliente com ID:', profile.client_id);
-      const { data: clients, error: clientError } = await supabase
+      const serviceSupabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+      );
+      
+      console.log('🔍 Login - buscando cliente ID:', profile.client_id);
+      
+      const { data: allClients, error: errorWithoutSingle } = await serviceSupabase
         .from('clients')
         .select('*')
         .eq('id', profile.client_id);
       
-      console.log('🔍 Login - resultado da busca:', { clients, clientError });
+      console.log('🔍 Login - result:', { data: allClients, error: errorWithoutSingle });
       
-      if (!clientError && clients && clients.length > 0) {
-        clientData = clients[0];
+      if (allClients && allClients.length > 0) {
+        clientData = allClients[0];
+        console.log('✅ Login - clientData encontrado:', clientData.name);
+      } else {
+        console.error('❌ Login - no client found');
       }
     }
-    
-    console.log('🔍 Login - clientData:', clientData ? clientData.name : 'null');
 
     // Buscar dados do Braza Bank se o usuário tiver braza_id
     let brazaData = null;
