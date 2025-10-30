@@ -103,14 +103,16 @@ router.post('/login', async (req, res) => {
     // Buscar dados do cliente separadamente usando service role
     let clientData = null;
     if (profile.client_id) {
+      console.log('🔍 Login - buscando cliente com ID:', profile.client_id);
       const { data: clients, error: clientError } = await supabase
         .from('clients')
         .select('*')
-        .eq('id', profile.client_id)
-        .single();
+        .eq('id', profile.client_id);
       
-      if (!clientError && clients) {
-        clientData = clients;
+      console.log('🔍 Login - resultado da busca:', { clients, clientError });
+      
+      if (!clientError && clients && clients.length > 0) {
+        clientData = clients[0];
       }
     }
     
