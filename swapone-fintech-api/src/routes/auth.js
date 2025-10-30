@@ -100,10 +100,10 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // clients(*) retorna um array, pegar o primeiro elemento
+    // clients(*) pode retornar um array ou objeto, pegar o primeiro elemento se for array
     const clientData = Array.isArray(profile.clients) && profile.clients.length > 0 
       ? profile.clients[0] 
-      : null;
+      : (typeof profile.clients === 'object' && profile.clients !== null ? profile.clients : null);
 
     // Buscar dados do Braza Bank se o usuário tiver braza_id
     let brazaData = null;
@@ -215,10 +215,10 @@ router.get('/me', authenticateToken, async (req, res) => {
       });
     }
 
-    // clients(*) retorna um array, pegar o primeiro elemento
+    // clients(*) pode retornar um array ou objeto, pegar o primeiro elemento se for array
     const clientData = Array.isArray(profile.clients) && profile.clients.length > 0 
       ? profile.clients[0] 
-      : null;
+      : (typeof profile.clients === 'object' && profile.clients !== null ? profile.clients : null);
     
     if (!clientData && profile.client_id) {
       console.log('⚠️ Client data not found in profile for user:', req.user.email, 'client_id:', profile.client_id);
