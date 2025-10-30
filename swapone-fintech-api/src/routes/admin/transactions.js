@@ -95,8 +95,11 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
     const limit = parseInt(req.query.limit) || 20;
     const offset = (page - 1) * limit;
     const clientId = req.query.client_id;
+    const status = req.query.status;
+    const operationType = req.query.operation_type;
+    const currency = req.query.currency;
 
-    console.log(`📊 Buscando transações - página ${page}, limite ${limit}${clientId ? `, cliente: ${clientId}` : ''}`);
+    console.log(`📊 Buscando transações - página ${page}, limite ${limit}${clientId ? `, cliente: ${clientId}` : ''}${status ? `, status: ${status}` : ''}${operationType ? `, tipo: ${operationType}` : ''}${currency ? `, moeda: ${currency}` : ''}`);
 
     // Construir query base
     let query = supabase
@@ -105,14 +108,30 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
         *,
         clients:client_id (
           name,
-          cnpj
+          cnpj,
+          account_number
         )
       `)
       .order('created_at', { ascending: false });
 
     // Aplicar filtro por cliente se fornecido
-    if (clientId) {
+    if (clientId && clientId !== 'all') {
       query = query.eq('client_id', clientId);
+    }
+
+    // Aplicar filtro por status se fornecido
+    if (status && status !== 'all') {
+      query = query.eq('status', status);
+    }
+
+    // Aplicar filtro por tipo de operação se fornecido
+    if (operationType && operationType !== 'all') {
+      query = query.eq('operation_type', operationType);
+    }
+
+    // Aplicar filtro por moeda (origem ou destino) se fornecido
+    if (currency && currency !== 'all') {
+      query = query.or(`source_currency.eq.${currency},target_currency.eq.${currency}`);
     }
 
     // Aplicar paginação
@@ -124,13 +143,22 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
       throw transactionsError;
     }
 
-    // Contar total de transações (com filtro se aplicável)
+    // Contar total de transações (com filtros se aplicáveis)
     let countQuery = supabase
       .from('operations_history')
       .select('*', { count: 'exact', head: true });
 
-    if (clientId) {
+    if (clientId && clientId !== 'all') {
       countQuery = countQuery.eq('client_id', clientId);
+    }
+    if (status && status !== 'all') {
+      countQuery = countQuery.eq('status', status);
+    }
+    if (operationType && operationType !== 'all') {
+      countQuery = countQuery.eq('operation_type', operationType);
+    }
+    if (currency && currency !== 'all') {
+      countQuery = countQuery.or(`source_currency.eq.${currency},target_currency.eq.${currency}`);
     }
 
     const { count, error: countError } = await countQuery;
@@ -144,7 +172,8 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
     const formattedTransactions = transactions.map(transaction => ({
       ...transaction,
       client_name: transaction.clients?.name || 'N/A',
-      client_cnpj: transaction.clients?.cnpj || 'N/A'
+      client_cnpj: transaction.clients?.cnpj || 'N/A',
+      client_account_number: transaction.clients?.account_number || null
     }));
 
     const totalPages = Math.ceil(count / limit);
