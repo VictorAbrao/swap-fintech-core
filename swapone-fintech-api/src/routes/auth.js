@@ -89,7 +89,7 @@ router.post('/login', async (req, res) => {
     // Buscar perfil do usuário
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('*, clients(*)')
+      .select('*')
       .eq('id', data.user.id)
       .single();
 
@@ -100,10 +100,21 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // clients(*) pode retornar um array ou objeto, pegar o primeiro elemento se for array
-    const clientData = Array.isArray(profile.clients) && profile.clients.length > 0 
-      ? profile.clients[0] 
-      : (typeof profile.clients === 'object' && profile.clients !== null ? profile.clients : null);
+    // Buscar dados do cliente separadamente usando service role
+    let clientData = null;
+    if (profile.client_id) {
+      const { data: clients, error: clientError } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', profile.client_id)
+        .single();
+      
+      if (!clientError && clients) {
+        clientData = clients;
+      }
+    }
+    
+    console.log('🔍 Login - clientData:', clientData ? clientData.name : 'null');
 
     // Buscar dados do Braza Bank se o usuário tiver braza_id
     let brazaData = null;
